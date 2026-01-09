@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let iti;
     if (phoneInput) {
         iti = window.intlTelInput(phoneInput, {
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+            utilsScript: cmb_obj.utils_url,
             preferredCountries: ['gb', 'us'],
             initialCountry: 'gb',
             separateDialCode: true,

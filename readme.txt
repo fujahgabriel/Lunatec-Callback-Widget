@@ -1,14 +1,14 @@
 === Simple Call Me Back ===
 Contributors: fujahgabriel
-Tags: callback, request call, contact form, floating button, lead generation, hubspot, slack
+Tags: callback, contact form, floating button, hubspot, lead generation
 Requires at least: 6.0
-Tested up to: 6.4
+Tested up to: 6.9
 Requires PHP: 7.4
 Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A simple and customizable plugin that allows visitors to request a callback via a floating button and a modal form. Includes Hubspot, Slack and Email integrations.
+A simple, customizable plugin for callback requests via a floating button and modal. Includes Hubspot, Slack and Email integrations.
 
 == Description ==
 
