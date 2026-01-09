@@ -2,9 +2,14 @@
 /**
  * Plugin Name: Simple Call Me Back
  * Description: A plugin to allow visitors to request a callback via a modal form.
- * Version: 1.0.1
+ * Version: 1.0.2
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Author: Fujah Gabriel
  * License: GPL2
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: call-me-back
+ * Domain Path: /languages
  * github: https://github.com/fujahgabriel/simple-call-me-back-wp-plugin
  */
 
@@ -14,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 class CallMeBackPlugin {
 
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
     const PLUGIN_NAME = 'Simple Call Me Back';
     const SPONSOR_URL = 'https://fujahgabriel.xyz/sponsor';
     private $table_name;
@@ -100,21 +105,31 @@ class CallMeBackPlugin {
      * Register Settings
      */
     public function register_settings() {
-        register_setting('cmb_settings_group', 'cmb_button_text');
-        register_setting('cmb_settings_group', 'cmb_button_color');
-        register_setting('cmb_settings_group', 'cmb_button_text_color');
-        register_setting('cmb_settings_group', 'cmb_modal_title');
-        register_setting('cmb_settings_group', 'cmb_modal_subtext');
-        register_setting('cmb_settings_group', 'cmb_submit_button_color');
-        register_setting('cmb_settings_group', 'cmb_submit_button_text_color');
-        register_setting('cmb_settings_group', 'cmb_modal_size');
-        register_setting('cmb_settings_group', 'cmb_show_floating_button');
-        register_setting('cmb_settings_group', 'cmb_float_position');
-        register_setting('cmb_settings_group', 'cmb_float_margin_x');
-        register_setting('cmb_settings_group', 'cmb_float_margin_y');
+        register_setting('cmb_settings_group', 'cmb_button_text', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('cmb_settings_group', 'cmb_button_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('cmb_settings_group', 'cmb_button_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('cmb_settings_group', 'cmb_modal_title', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('cmb_settings_group', 'cmb_modal_subtext', array('sanitize_callback' => 'sanitize_textarea_field'));
+        register_setting('cmb_settings_group', 'cmb_submit_button_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('cmb_settings_group', 'cmb_submit_button_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('cmb_settings_group', 'cmb_modal_footer_text', array('sanitize_callback' => 'wp_kses_post'));
+        register_setting('cmb_settings_group', 'cmb_modal_footer_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('cmb_settings_group', 'cmb_modal_size', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('cmb_settings_group', 'cmb_show_floating_button', array('sanitize_callback' => 'absint'));
+        register_setting('cmb_settings_group', 'cmb_float_position', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('cmb_settings_group', 'cmb_float_margin_x', array('sanitize_callback' => 'absint'));
+        register_setting('cmb_settings_group', 'cmb_float_margin_y', array('sanitize_callback' => 'absint'));
         // HubSpot Settings
-        register_setting('cmb_settings_group', 'cmb_enable_hubspot_sync');
-        register_setting('cmb_settings_group', 'cmb_hubspot_api_key');
+        register_setting('cmb_settings_group', 'cmb_enable_hubspot_sync', array('sanitize_callback' => 'absint'));
+        register_setting('cmb_settings_group', 'cmb_hubspot_api_key', array('sanitize_callback' => 'sanitize_text_field'));
+
+        // Email Settings
+        register_setting('cmb_settings_group', 'cmb_enable_email_notification', array('sanitize_callback' => 'absint'));
+        register_setting('cmb_settings_group', 'cmb_notification_email', array('sanitize_callback' => 'sanitize_email'));
+
+        // Slack Settings
+        register_setting('cmb_settings_group', 'cmb_enable_slack_notification', array('sanitize_callback' => 'absint'));
+        register_setting('cmb_settings_group', 'cmb_slack_webhook_url', array('sanitize_callback' => 'esc_url_raw'));
     }
 
     /**
@@ -122,7 +137,8 @@ class CallMeBackPlugin {
      */
     public function enqueue_scripts() {
         wp_enqueue_style('cmb-style', plugin_dir_url(__FILE__) . 'assets/css/style.css');
-        wp_enqueue_style('intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css');
+        wp_enqueue_style('intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/css/intlTelInput.css');
+        wp_enqueue_style('dashicons');
         
         // Dynamic styles from settings
         $bg_color = get_option('cmb_button_color', '#0073aa');
@@ -163,21 +179,28 @@ class CallMeBackPlugin {
                 background-color: {$submit_bg_color};
                 color: {$submit_text_color};
             }
+            .cmb-details { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .cmb-summary { cursor: pointer; font-size: 0.9em; color: #555; margin-bottom: 5px; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+            .cmb-summary::-webkit-details-marker { display: none; }
+            .cmb-summary .dashicons { transition: transform 0.2s; font-size: 1.2em; width: 20px; height: 20px; }
+            .cmb-details[open] .cmb-summary .dashicons { transform: rotate(180deg); }
+            .cmb-details[open] .cmb-summary { margin-bottom: 15px; color: #333; }
             /* Override intl-tel-input to match form style */
             .iti { width: 100%; }
-            .iti__flag { background-image: url('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/img/flags.png'); }
+            .iti__flag { background-image: url('assets/vendor/intl-tel-input/img/flags.png'); }
             @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-              .iti__flag { background-image: url('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/img/flags@2x.png'); }
+              .iti__flag { background-image: url('assets/vendor/intl-tel-input/img/flags@2x.png'); }
             }
         ";
         wp_add_inline_style('cmb-style', $custom_css);
 
-        wp_enqueue_script('intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js', array(), '17.0.8', true);
+        wp_enqueue_script('intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/intlTelInput.min.js', array(), '17.0.8', true);
         wp_enqueue_script('cmb-script', plugin_dir_url(__FILE__) . 'assets/js/script.js', array('intl-tel-input'), self::VERSION, true);
         
         wp_localize_script('cmb-script', 'cmb_obj', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('cmb_submit_request_nonce')
+            'nonce' => wp_create_nonce('cmb_submit_request_nonce'),
+            'utils_url' => plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/utils.js'
         ));
     }
 
@@ -257,18 +280,30 @@ class CallMeBackPlugin {
                         <input type="tel" id="cmb-phone" name="cmb_phone" placeholder="" required>
                     </div>
 
-                    <div class="cmb-form-group">
-                        <label for="cmb-position">Position</label>
-                        <input type="text" id="cmb-position" name="cmb_position" placeholder="e.g. Marketing Manager">
-                    </div>
+                    <details class="cmb-details">
+                        <summary class="cmb-summary">Additional Info (Position, Company) <span class="dashicons dashicons-arrow-down-alt2"></span></summary>
+                        <div class="cmb-form-group">
+                            <label for="cmb-position">Position</label>
+                            <input type="text" id="cmb-position" name="cmb_position" placeholder="e.g. Marketing Manager">
+                        </div>
 
-                    <div class="cmb-form-group">
-                        <label for="cmb-company">Company Name</label>
-                        <input type="text" id="cmb-company" name="cmb_company" placeholder="e.g. Acme Corp">
-                    </div>
+                        <div class="cmb-form-group">
+                            <label for="cmb-company">Company Name</label>
+                            <input type="text" id="cmb-company" name="cmb_company" placeholder="e.g. Acme Corp">
+                        </div>
+                    </details>
 
                     <button type="submit" class="cmb-submit-btn">Submit Request</button>
                     <div id="cmb-message" class="cmb-message"></div>
+                    
+                    <?php 
+                    $footer_text = get_option('cmb_modal_footer_text');
+                    $footer_color = get_option('cmb_modal_footer_text_color', '#666666');
+                    if (!empty($footer_text)): ?>
+                        <p class="cmb-modal-footer-text" style="text-align: center; margin-top: 15px; font-size: 0.9em; color: <?php echo esc_attr($footer_color); ?>;">
+                            <?php echo wp_kses_post($footer_text); ?>
+                        </p>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>
@@ -281,10 +316,10 @@ class CallMeBackPlugin {
     public function handle_submission() {
         check_ajax_referer('cmb_submit_request_nonce', 'nonce');
 
-        $name = sanitize_text_field($_POST['cmb_name']);
-        $phone = sanitize_text_field($_POST['cmb_phone']);
-        $position = sanitize_text_field($_POST['cmb_position']);
-        $company = sanitize_text_field($_POST['cmb_company']);
+        $name = sanitize_text_field(wp_unslash($_POST['cmb_name']));
+        $phone = sanitize_text_field(wp_unslash($_POST['cmb_phone']));
+        $position = sanitize_text_field(wp_unslash($_POST['cmb_position']));
+        $company = sanitize_text_field(wp_unslash($_POST['cmb_company']));
 
         if (empty($name) || empty($phone)) {
             wp_send_json_error(array('message' => 'Name and Phone are required.'));
@@ -306,6 +341,16 @@ class CallMeBackPlugin {
             // Trigger HubSpot Sync
             if (get_option('cmb_enable_hubspot_sync') && get_option('cmb_hubspot_api_key')) {
                 $this->sync_to_hubspot($name, $phone, $position, $company);
+            }
+
+            // Trigger Email Notification
+            if (get_option('cmb_enable_email_notification')) {
+                $this->send_email_notification($name, $phone, $position, $company);
+            }
+
+            // Trigger Slack Notification
+            if (get_option('cmb_enable_slack_notification') && get_option('cmb_slack_webhook_url')) {
+                $this->send_slack_notification($name, $phone, $position, $company);
             }
 
             wp_send_json_success(array('message' => 'Thank you! We will call you back soon.'));
@@ -348,7 +393,59 @@ class CallMeBackPlugin {
         ));
 
         if (is_wp_error($response)) {
-            error_log(self::PLUGIN_NAME . ' - HubSpot Sync Error: ' . $response->get_error_message());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(self::PLUGIN_NAME . ' - HubSpot Sync Error: ' . $response->get_error_message());
+            }
+        }
+    }
+
+    /**
+     * Send Email Notification
+     */
+    private function send_email_notification($name, $phone, $position, $company) {
+        $to = get_option('cmb_notification_email', get_option('admin_email'));
+        if (!is_email($to)) return;
+
+        $subject = 'New Message: ' . self::PLUGIN_NAME;
+        
+        $message  = "You have received a new callback request.\n\n";
+        $message .= "Name: " . $name . "\n";
+        $message .= "Phone: " . $phone . "\n";
+        if ($position) $message .= "Position: " . $position . "\n";
+        if ($company) $message .= "Company: " . $company . "\n";
+        $message .= "\nLogin to your dashboard to manage requests.";
+
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        
+        wp_mail($to, $subject, $message, $headers);
+    }
+
+    /**
+     * Send Slack Notification
+     */
+    private function send_slack_notification($name, $phone, $position, $company) {
+        $webhook_url = get_option('cmb_slack_webhook_url');
+        if (empty($webhook_url)) return;
+
+        $text = "*New Callback Request from " . self::PLUGIN_NAME . "*\n";
+        $text .= "*Name:* $name\n";
+        $text .= "*Phone:* $phone\n";
+        if ($position) $text .= "*Position:* $position\n";
+        if ($company) $text .= "*Company:* $company\n";
+
+        $payload = array('text' => $text);
+
+        $response = wp_remote_post($webhook_url, array(
+            'body' => json_encode($payload),
+            'headers' => array('Content-Type' => 'application/json'),
+            'method' => 'POST',
+            'data_format' => 'body'
+        ));
+
+        if (is_wp_error($response)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(self::PLUGIN_NAME . ' - Slack Notification Error: ' . $response->get_error_message());
+            }
         }
     }
 
@@ -358,7 +455,7 @@ class CallMeBackPlugin {
     public function requests_page() {
         global $wpdb;
         
-        $action = isset($_GET['action']) ? $_GET['action'] : 'list';
+        $action = isset($_GET['action']) ? sanitize_text_field(wp_unslash($_GET['action'])) : 'list';
         $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
         // Handle Delete
@@ -371,17 +468,17 @@ class CallMeBackPlugin {
 
         // Handle Edit Save
         if (isset($_POST['cmb_action']) && $_POST['cmb_action'] == 'update_request') {
-             $id = intval($_POST['request_id']);
+             $id = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
              check_admin_referer('cmb_edit_request_' . $id);
              
              $wpdb->update(
                 $this->table_name,
                 array(
-                    'name' => sanitize_text_field($_POST['cmb_name']),
-                    'phone' => sanitize_text_field($_POST['cmb_phone']),
-                    'position' => sanitize_text_field($_POST['cmb_position']),
-                    'company' => sanitize_text_field($_POST['cmb_company']),
-                    'status' => sanitize_text_field($_POST['cmb_status'])
+                    'name' => sanitize_text_field(wp_unslash($_POST['cmb_name'])),
+                    'phone' => sanitize_text_field(wp_unslash($_POST['cmb_phone'])),
+                    'position' => sanitize_text_field(wp_unslash($_POST['cmb_position'])),
+                    'company' => sanitize_text_field(wp_unslash($_POST['cmb_company'])),
+                    'status' => sanitize_text_field(wp_unslash($_POST['cmb_status']))
                 ),
                 array('id' => $id)
              );
@@ -404,6 +501,14 @@ class CallMeBackPlugin {
     private function render_list_page() {
         global $wpdb;
 
+        // Custom CSS for Status Badges
+        echo '<style>
+            .cmb-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; }
+            .cmb-status-new { background-color: #2271b1; }
+            .cmb-status-contacted { background-color: #dba617; }
+            .cmb-status-closed { background-color: #787c82; }
+        </style>';
+
         // Handle pagination
         $per_page = 20;
         $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -422,7 +527,7 @@ class CallMeBackPlugin {
         <div class="wrap">
             <h1>Call Back Requests</h1>
             
-            <form method="post" action="<?php echo admin_url('admin.php?action=cmb_export_csv'); ?>" style="float: right; margin-bottom: 10px;">
+            <form method="post" action="<?php echo esc_url(admin_url('admin.php?action=cmb_export_csv')); ?>" style="float: right; margin-bottom: 10px;">
                 <?php wp_nonce_field('cmb_export_csv_nonce', 'cmb_export_nonce'); ?>
                 <button type="submit" class="button button-primary">Export to CSV</button>
             </form>
@@ -444,12 +549,18 @@ class CallMeBackPlugin {
                     <?php if ($results) : ?>
                         <?php foreach ($results as $row) : ?>
                             <tr>
-                                <td><?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($row->time)); ?></td>
+                                <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($row->time))); ?></td>
                                 <td><?php echo esc_html($row->name); ?></td>
                                 <td><a href="tel:<?php echo esc_attr($row->phone); ?>"><?php echo esc_html($row->phone); ?></a></td>
                                 <td><?php echo esc_html($row->position); ?></td>
                                 <td><?php echo esc_html($row->company); ?></td>
-                                <td><?php echo esc_html($row->status); ?></td>
+                                <td>
+                                    <?php 
+                                    $status_class = 'cmb-status-' . sanitize_html_class($row->status); 
+                                    $status_label = ucfirst($row->status);
+                                    ?>
+                                    <span class="cmb-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span>
+                                </td>
                                 <td>
                                     <?php 
                                     $edit_url = add_query_arg(array('page' => 'call-me-back', 'action' => 'edit', 'id' => $row->id), admin_url('admin.php'));
@@ -472,14 +583,14 @@ class CallMeBackPlugin {
                 <div class="tablenav bottom">
                     <div class="tablenav-pages">
                         <?php
-                        echo paginate_links(array(
+                        echo wp_kses_post(paginate_links(array(
                             'base' => add_query_arg('paged', '%#%'),
                             'format' => '',
-                            'prev_text' => __('&laquo;'),
-                            'next_text' => __('&raquo;'),
+                            'prev_text' => __('&laquo;', 'call-me-back'),
+                            'next_text' => __('&raquo;', 'call-me-back'),
                             'total' => $total_pages,
                             'current' => $current_page
-                        ));
+                        )));
                         ?>
                     </div>
                 </div>
@@ -503,7 +614,7 @@ class CallMeBackPlugin {
         ?>
         <div class="wrap">
             <h1>Edit Request</h1>
-            <a href="<?php echo admin_url('admin.php?page=call-me-back'); ?>" class="page-title-action">Back to List</a>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=call-me-back')); ?>" class="page-title-action">Back to List</a>
             
             <form method="post">
                 <input type="hidden" name="cmb_action" value="update_request">
@@ -539,7 +650,7 @@ class CallMeBackPlugin {
                     </tr>
                     <tr>
                         <th>Date Submitted</th>
-                        <td><?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($item->time)); ?></td>
+                        <td><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($item->time))); ?></td>
                     </tr>
                 </table>
 
@@ -597,7 +708,20 @@ class CallMeBackPlugin {
                     </tr>
 
                     <tr valign="top">
-                        <th scope="row">Modal Size</th>
+                        <th scope="row">Text Below Submit Button</th>
+                        <td>
+                            <input type="text" name="cmb_modal_footer_text" value="<?php echo esc_attr(get_option('cmb_modal_footer_text')); ?>" class="regular-text" />
+                            <p class="description">e.g. Call us anytime on <a href="tel:+123456789">+1 234 567 89</a></p>
+                        </td>
+                    </tr>
+
+                    <tr valign="top">
+                        <th scope="row">Footer Text Color</th>
+                        <td><input type="color" name="cmb_modal_footer_text_color" value="<?php echo esc_attr(get_option('cmb_modal_footer_text_color', '#666666')); ?>" /></td>
+                    </tr>
+
+                    <tr valign="top">
+                        <th scope="row"></th>Modal Size</th>
                         <td>
                             <select name="cmb_modal_size">
                                 <option value="small" <?php selected(get_option('cmb_modal_size', 'medium'), 'small'); ?>>Small</option>
@@ -666,6 +790,50 @@ class CallMeBackPlugin {
                         </td>
                     </tr>
                 </table>
+
+                <hr>
+                <h3>Email Notifications</h3>
+                <p class="description">Receive an email when a new request is submitted.</p>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row">Enable Email</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="cmb_enable_email_notification" value="1" <?php checked(get_option('cmb_enable_email_notification'), '1'); ?> />
+                                Send email notifications
+                            </label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Recipient Email</th>
+                        <td>
+                            <input type="email" name="cmb_notification_email" value="<?php echo esc_attr(get_option('cmb_notification_email', get_option('admin_email'))); ?>" class="regular-text" />
+                            <p class="description">Enter the email address locally (Defaults to site admin email).</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr>
+                <h3>Slack Integration</h3>
+                <p class="description">Send a notification to a Slack channel via Webhook.</p>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row">Enable Slack</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="cmb_enable_slack_notification" value="1" <?php checked(get_option('cmb_enable_slack_notification'), '1'); ?> />
+                                Send Slack notifications
+                            </label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Slack Webhook URL</th>
+                        <td>
+                            <input type="url" name="cmb_slack_webhook_url" value="<?php echo esc_attr(get_option('cmb_slack_webhook_url')); ?>" class="regular-text" />
+                            <p class="description">Paste your <a href="https://api.slack.com/messaging/webhooks" target="_blank">Incoming Webhook URL</a> here.</p>
+                        </td>
+                    </tr>
+                </table>
                 
                 <?php submit_button(); ?>
 
@@ -688,27 +856,29 @@ class CallMeBackPlugin {
      * Handle CSV Export
      */
     public function handle_csv_export() {
-        if (isset($_GET['action']) && $_GET['action'] == 'cmb_export_csv') {
+        if (isset($_GET['action']) && sanitize_text_field(wp_unslash($_GET['action'])) == 'cmb_export_csv') {
             
+            // Check permissions first
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'call-me-back'));
+            }
+
             // Check nonce
-            if (!isset($_POST['cmb_export_nonce']) || !wp_verify_nonce($_POST['cmb_export_nonce'], 'cmb_export_csv_nonce')) {
-                // Allows direct link if admin is logged in, but better to check permissions
-                if (!current_user_can('manage_options')) {
-                    return;
-                }
+            if (!isset($_POST['cmb_export_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['cmb_export_nonce'])), 'cmb_export_csv_nonce')) {
+                wp_die(esc_html__('Security check failed', 'call-me-back'));
             }
 
             global $wpdb;
             $results = $wpdb->get_results("SELECT * FROM $this->table_name ORDER BY time DESC", ARRAY_A);
 
-            $filename = 'callback_requests_' . date('Y-m-d') . '.csv';
+            $filename = 'callback_requests_' . gmdate('Y-m-d') . '.csv';
             
             header('Content-Type: text/csv');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             header('Pragma: no-cache');
             header('Expires: 0');
 
-            $output = fopen('php://output', 'w');
+            $output = fopen('php://output', 'w'); // WP_Filesystem is not suitable for output streams
             
             // Header row
             fputcsv($output, array('ID', 'Date', 'Name', 'Phone', 'Position', 'Company'));
@@ -725,7 +895,6 @@ class CallMeBackPlugin {
                 ));
             }
 
-            fclose($output);
             exit;
         }
     }
