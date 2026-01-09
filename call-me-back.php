@@ -2,9 +2,14 @@
 /**
  * Plugin Name: Simple Call Me Back
  * Description: A plugin to allow visitors to request a callback via a modal form.
- * Version: 1.0.1
+ * Version: 1.0.2
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Author: Fujah Gabriel
  * License: GPL2
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: simple-call-me-back
+ * Domain Path: /languages
  * github: https://github.com/fujahgabriel/simple-call-me-back-wp-plugin
  */
 
@@ -14,7 +19,7 @@ if (!defined('ABSPATH')) {
 
 class CallMeBackPlugin {
 
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
     const PLUGIN_NAME = 'Simple Call Me Back';
     const SPONSOR_URL = 'https://fujahgabriel.xyz/sponsor';
     private $table_name;
@@ -107,6 +112,8 @@ class CallMeBackPlugin {
         register_setting('cmb_settings_group', 'cmb_modal_subtext');
         register_setting('cmb_settings_group', 'cmb_submit_button_color');
         register_setting('cmb_settings_group', 'cmb_submit_button_text_color');
+        register_setting('cmb_settings_group', 'cmb_modal_footer_text');
+        register_setting('cmb_settings_group', 'cmb_modal_footer_text_color');
         register_setting('cmb_settings_group', 'cmb_modal_size');
         register_setting('cmb_settings_group', 'cmb_show_floating_button');
         register_setting('cmb_settings_group', 'cmb_float_position');
@@ -115,6 +122,14 @@ class CallMeBackPlugin {
         // HubSpot Settings
         register_setting('cmb_settings_group', 'cmb_enable_hubspot_sync');
         register_setting('cmb_settings_group', 'cmb_hubspot_api_key');
+
+        // Email Settings
+        register_setting('cmb_settings_group', 'cmb_enable_email_notification');
+        register_setting('cmb_settings_group', 'cmb_notification_email');
+
+        // Slack Settings
+        register_setting('cmb_settings_group', 'cmb_enable_slack_notification');
+        register_setting('cmb_settings_group', 'cmb_slack_webhook_url');
     }
 
     /**
@@ -123,6 +138,7 @@ class CallMeBackPlugin {
     public function enqueue_scripts() {
         wp_enqueue_style('cmb-style', plugin_dir_url(__FILE__) . 'assets/css/style.css');
         wp_enqueue_style('intl-tel-input', 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css');
+        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css');
         
         // Dynamic styles from settings
         $bg_color = get_option('cmb_button_color', '#0073aa');
@@ -163,6 +179,12 @@ class CallMeBackPlugin {
                 background-color: {$submit_bg_color};
                 color: {$submit_text_color};
             }
+            .cmb-details { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .cmb-summary { cursor: pointer; font-size: 0.9em; color: #555; margin-bottom: 5px; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+            .cmb-summary::-webkit-details-marker { display: none; }
+            .cmb-summary i { transition: transform 0.2s; font-size: 0.8em; }
+            .cmb-details[open] .cmb-summary i { transform: rotate(180deg); }
+            .cmb-details[open] .cmb-summary { margin-bottom: 15px; color: #333; }
             /* Override intl-tel-input to match form style */
             .iti { width: 100%; }
             .iti__flag { background-image: url('https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/img/flags.png'); }
@@ -257,18 +279,30 @@ class CallMeBackPlugin {
                         <input type="tel" id="cmb-phone" name="cmb_phone" placeholder="" required>
                     </div>
 
-                    <div class="cmb-form-group">
-                        <label for="cmb-position">Position</label>
-                        <input type="text" id="cmb-position" name="cmb_position" placeholder="e.g. Marketing Manager">
-                    </div>
+                    <details class="cmb-details">
+                        <summary class="cmb-summary">Additional Info (Position, Company) <i class="fa fas fa-chevron-down"></i></summary>
+                        <div class="cmb-form-group">
+                            <label for="cmb-position">Position</label>
+                            <input type="text" id="cmb-position" name="cmb_position" placeholder="e.g. Marketing Manager">
+                        </div>
 
-                    <div class="cmb-form-group">
-                        <label for="cmb-company">Company Name</label>
-                        <input type="text" id="cmb-company" name="cmb_company" placeholder="e.g. Acme Corp">
-                    </div>
+                        <div class="cmb-form-group">
+                            <label for="cmb-company">Company Name</label>
+                            <input type="text" id="cmb-company" name="cmb_company" placeholder="e.g. Acme Corp">
+                        </div>
+                    </details>
 
                     <button type="submit" class="cmb-submit-btn">Submit Request</button>
                     <div id="cmb-message" class="cmb-message"></div>
+                    
+                    <?php 
+                    $footer_text = get_option('cmb_modal_footer_text');
+                    $footer_color = get_option('cmb_modal_footer_text_color', '#666666');
+                    if (!empty($footer_text)): ?>
+                        <p class="cmb-modal-footer-text" style="text-align: center; margin-top: 15px; font-size: 0.9em; color: <?php echo esc_attr($footer_color); ?>;">
+                            <?php echo wp_kses_post($footer_text); ?>
+                        </p>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>
@@ -306,6 +340,16 @@ class CallMeBackPlugin {
             // Trigger HubSpot Sync
             if (get_option('cmb_enable_hubspot_sync') && get_option('cmb_hubspot_api_key')) {
                 $this->sync_to_hubspot($name, $phone, $position, $company);
+            }
+
+            // Trigger Email Notification
+            if (get_option('cmb_enable_email_notification')) {
+                $this->send_email_notification($name, $phone, $position, $company);
+            }
+
+            // Trigger Slack Notification
+            if (get_option('cmb_enable_slack_notification') && get_option('cmb_slack_webhook_url')) {
+                $this->send_slack_notification($name, $phone, $position, $company);
             }
 
             wp_send_json_success(array('message' => 'Thank you! We will call you back soon.'));
@@ -349,6 +393,54 @@ class CallMeBackPlugin {
 
         if (is_wp_error($response)) {
             error_log(self::PLUGIN_NAME . ' - HubSpot Sync Error: ' . $response->get_error_message());
+        }
+    }
+
+    /**
+     * Send Email Notification
+     */
+    private function send_email_notification($name, $phone, $position, $company) {
+        $to = get_option('cmb_notification_email', get_option('admin_email'));
+        if (!is_email($to)) return;
+
+        $subject = 'New Message: ' . self::PLUGIN_NAME;
+        
+        $message  = "You have received a new callback request.\n\n";
+        $message .= "Name: " . $name . "\n";
+        $message .= "Phone: " . $phone . "\n";
+        if ($position) $message .= "Position: " . $position . "\n";
+        if ($company) $message .= "Company: " . $company . "\n";
+        $message .= "\nLogin to your dashboard to manage requests.";
+
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        
+        wp_mail($to, $subject, $message, $headers);
+    }
+
+    /**
+     * Send Slack Notification
+     */
+    private function send_slack_notification($name, $phone, $position, $company) {
+        $webhook_url = get_option('cmb_slack_webhook_url');
+        if (empty($webhook_url)) return;
+
+        $text = "*New Callback Request from " . self::PLUGIN_NAME . "*\n";
+        $text .= "*Name:* $name\n";
+        $text .= "*Phone:* $phone\n";
+        if ($position) $text .= "*Position:* $position\n";
+        if ($company) $text .= "*Company:* $company\n";
+
+        $payload = array('text' => $text);
+
+        $response = wp_remote_post($webhook_url, array(
+            'body' => json_encode($payload),
+            'headers' => array('Content-Type' => 'application/json'),
+            'method' => 'POST',
+            'data_format' => 'body'
+        ));
+
+        if (is_wp_error($response)) {
+            error_log(self::PLUGIN_NAME . ' - Slack Notification Error: ' . $response->get_error_message());
         }
     }
 
@@ -404,6 +496,14 @@ class CallMeBackPlugin {
     private function render_list_page() {
         global $wpdb;
 
+        // Custom CSS for Status Badges
+        echo '<style>
+            .cmb-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; }
+            .cmb-status-new { background-color: #2271b1; }
+            .cmb-status-contacted { background-color: #dba617; }
+            .cmb-status-closed { background-color: #787c82; }
+        </style>';
+
         // Handle pagination
         $per_page = 20;
         $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -449,7 +549,13 @@ class CallMeBackPlugin {
                                 <td><a href="tel:<?php echo esc_attr($row->phone); ?>"><?php echo esc_html($row->phone); ?></a></td>
                                 <td><?php echo esc_html($row->position); ?></td>
                                 <td><?php echo esc_html($row->company); ?></td>
-                                <td><?php echo esc_html($row->status); ?></td>
+                                <td>
+                                    <?php 
+                                    $status_class = 'cmb-status-' . sanitize_html_class($row->status); 
+                                    $status_label = ucfirst($row->status);
+                                    ?>
+                                    <span class="cmb-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span>
+                                </td>
                                 <td>
                                     <?php 
                                     $edit_url = add_query_arg(array('page' => 'call-me-back', 'action' => 'edit', 'id' => $row->id), admin_url('admin.php'));
@@ -597,7 +703,20 @@ class CallMeBackPlugin {
                     </tr>
 
                     <tr valign="top">
-                        <th scope="row">Modal Size</th>
+                        <th scope="row">Text Below Submit Button</th>
+                        <td>
+                            <input type="text" name="cmb_modal_footer_text" value="<?php echo esc_attr(get_option('cmb_modal_footer_text')); ?>" class="regular-text" />
+                            <p class="description">e.g. Call us anytime on <a href="tel:+123456789">+1 234 567 89</a></p>
+                        </td>
+                    </tr>
+
+                    <tr valign="top">
+                        <th scope="row">Footer Text Color</th>
+                        <td><input type="color" name="cmb_modal_footer_text_color" value="<?php echo esc_attr(get_option('cmb_modal_footer_text_color', '#666666')); ?>" /></td>
+                    </tr>
+
+                    <tr valign="top">
+                        <th scope="row"></th>Modal Size</th>
                         <td>
                             <select name="cmb_modal_size">
                                 <option value="small" <?php selected(get_option('cmb_modal_size', 'medium'), 'small'); ?>>Small</option>
@@ -663,6 +782,50 @@ class CallMeBackPlugin {
                         <td>
                             <input type="password" name="cmb_hubspot_api_key" value="<?php echo esc_attr(get_option('cmb_hubspot_api_key')); ?>" class="regular-text" />
                             <p class="description">Enter your Private App Access Token (from HubSpot Settings > Integrations > Private Apps).</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr>
+                <h3>Email Notifications</h3>
+                <p class="description">Receive an email when a new request is submitted.</p>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row">Enable Email</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="cmb_enable_email_notification" value="1" <?php checked(get_option('cmb_enable_email_notification'), '1'); ?> />
+                                Send email notifications
+                            </label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Recipient Email</th>
+                        <td>
+                            <input type="email" name="cmb_notification_email" value="<?php echo esc_attr(get_option('cmb_notification_email', get_option('admin_email'))); ?>" class="regular-text" />
+                            <p class="description">Enter the email address locally (Defaults to site admin email).</p>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr>
+                <h3>Slack Integration</h3>
+                <p class="description">Send a notification to a Slack channel via Webhook.</p>
+                <table class="form-table">
+                    <tr valign="top">
+                        <th scope="row">Enable Slack</th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="cmb_enable_slack_notification" value="1" <?php checked(get_option('cmb_enable_slack_notification'), '1'); ?> />
+                                Send Slack notifications
+                            </label>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row">Slack Webhook URL</th>
+                        <td>
+                            <input type="url" name="cmb_slack_webhook_url" value="<?php echo esc_attr(get_option('cmb_slack_webhook_url')); ?>" class="regular-text" />
+                            <p class="description">Paste your <a href="https://api.slack.com/messaging/webhooks" target="_blank">Incoming Webhook URL</a> here.</p>
                         </td>
                     </tr>
                 </table>

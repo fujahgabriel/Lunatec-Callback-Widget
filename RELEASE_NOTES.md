@@ -1,3 +1,19 @@
+# 🚀 Release Notes: Simple Call Me Back v1.0.2
+
+This release brings powerful notification capabilities to keep you in the loop instantly.
+
+## 🌟 New Features in v1.0.2
+
+### 🔔 Instant Notifications
+Never miss a lead again with new notification channels.
+*   **Slack Integration**: Receive instant alerts in your Slack channels via Webhook.
+*   **Email Notifications**: precise email alerts sent directly to your admin address.
+
+### 🎨 Admin Improvements
+*   **Status Badges**: The Requests dashboard now features color-coded badges (New, Contacted, Closed) for better visual management.
+
+---
+
 # 🚀 Release Notes: Simple Call Me Back v1.0.1
 
 We are taking **Simple Call Me Back** to the next level with powerful integration capabilities and more design control. This release focuses on workflow automation and pixel-perfect design.

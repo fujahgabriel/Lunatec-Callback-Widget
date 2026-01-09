@@ -24,6 +24,9 @@ The plugin is designed to be lightweight and easy to configure.
     *   Configure submit button colors.
 *   **CRM Integration**:
     *   **HubSpot**: Automatically sync valid callback requests to HubSpot CRM as contacts.
+*   **Notifications**:
+    *   **Slack**: Send notifications to a Slack channel via Webhook.
+    *   **Email**: Receive email alerts for every new request.
 *   **Shortcode Support**: Use `[call_me_back]` to place a trigger button anywhere on your site.
 
 ## Installation
@@ -50,7 +53,11 @@ You can also place a callback request button inside any post or page using the s
 
 ## Changelog
 
-### 1.1.0
+### 1.0.2
+*   **New**: Added Slack and Email notification support.
+*   **Improvement**: Added status badges to the admin requests list.
+
+### 1.0.1
 *   **New**: HubSpot Integration! You can now sync requests directly to HubSpot CRM.
 *   **New**: Added "Margin X" and "Margin Y" settings for precise positioning of the floating button.
 *   **Fixed**: Minor styling adjustments.
