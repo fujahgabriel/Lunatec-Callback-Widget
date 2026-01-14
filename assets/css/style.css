@@ -1,12 +1,12 @@
 /* Typography & Reset */
-.cmb-container, 
-.cmb-container * {
+.lcbw-container, 
+.lcbw-container * {
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 /* Floating Button */
-.cmb-floating-btn {
+.lcbw-floating-btn {
     position: fixed;
     bottom: 30px;
     right: 30px;
@@ -27,17 +27,17 @@
     gap: 10px;
 }
 
-.cmb-floating-btn:hover {
+.lcbw-floating-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 7px 25px rgba(0,0,0,0.25);
 }
 
-.cmb-floating-btn:active {
+.lcbw-floating-btn:active {
     transform: translateY(0);
 }
 
 /* Modal Overlay */
-.cmb-modal-overlay {
+.lcbw-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -55,13 +55,13 @@
     padding: 20px;
 }
 
-.cmb-modal-overlay.active {
+.lcbw-modal-overlay.active {
     opacity: 1;
     visibility: visible;
 }
 
 /* Modal Content */
-.cmb-modal {
+.lcbw-modal {
     background: #fff;
     padding: 40px;
     border-radius: 16px;
@@ -75,17 +75,17 @@
 }
 
 /* Modal Sizes Classes (To be used via settings if needed, or by modifying max-width) */
-.cmb-modal.cmb-size-small { max-width: 380px; }
-.cmb-modal.cmb-size-medium { max-width: 480px; }
-.cmb-modal.cmb-size-large { max-width: 600px; }
+.lcbw-modal.lcbw-size-small { max-width: 380px; }
+.lcbw-modal.lcbw-size-medium { max-width: 480px; }
+.lcbw-modal.lcbw-size-large { max-width: 600px; }
 
 
-.cmb-modal-overlay.active .cmb-modal {
+.lcbw-modal-overlay.active .lcbw-modal {
     transform: scale(1);
     opacity: 1;
 }
 
-.cmb-modal-close {
+.lcbw-modal-close {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -103,12 +103,12 @@
     transition: background 0.2s;
 }
 
-.cmb-modal-close:hover {
+.lcbw-modal-close:hover {
     background: #e4e6eb;
     color: #333;
 }
 
-.cmb-modal-title {
+.lcbw-modal-title {
     margin-top: 0;
     margin-bottom: 24px;
     font-size: 24px;
@@ -118,11 +118,11 @@
 }
 
 /* Form Styles */
-.cmb-form-group {
+.lcbw-form-group {
     margin-bottom: 20px;
 }
 
-.cmb-form-group label {
+.lcbw-form-group label {
     display: block;
     margin-bottom: 8px;
     font-weight: 500;
@@ -130,7 +130,7 @@
     color: #4a4a4a;
 }
 
-.cmb-form-group input {
+.lcbw-form-group input {
     width: 100%;
     padding: 12px 16px;
     border: 1px solid #e1e3e6;
@@ -143,12 +143,12 @@
     background: #fff;
 }
 
-.cmb-form-group input:focus {
+.lcbw-form-group input:focus {
     border-color: #0073aa;
     box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1);
 }
 
-.cmb-submit-btn {
+.lcbw-submit-btn {
     background: #0073aa;
     color: #fff;
     border: none;
@@ -164,23 +164,23 @@
     text-align: center;
 }
 
-.cmb-submit-btn:hover {
+.lcbw-submit-btn:hover {
     background: #005177;
     transform: translateY(-1px);
 }
 
-.cmb-submit-btn:active {
+.lcbw-submit-btn:active {
     transform: translateY(0);
 }
 
-.cmb-submit-btn:disabled {
+.lcbw-submit-btn:disabled {
     background: #ccc;
     cursor: not-allowed;
     transform: none;
 }
 
 /* Messages */
-.cmb-message {
+.lcbw-message {
     margin-top: 20px;
     padding: 12px 16px;
     border-radius: 8px;
@@ -195,13 +195,13 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-.cmb-message.success {
+.lcbw-message.success {
     background-color: #e6f7ef;
     color: #0d8a4f;
     border: 1px solid #cef0df;
 }
 
-.cmb-message.error {
+.lcbw-message.error {
     background-color: #fceceb;
     color: #d12e2e;
     border: 1px solid #fadddc;
@@ -209,7 +209,7 @@
 
 /* Responsive Modal Sizes */
 @media (max-width: 480px) {
-    .cmb-modal {
+    .lcbw-modal {
         padding: 30px 25px;
         width: 100%;
         max-width: 100% !important; /* Force full width on mobile */
@@ -221,16 +221,16 @@
         margin: 0;
     }
 
-    .cmb-modal-overlay {
+    .lcbw-modal-overlay {
         padding: 0;
         align-items: flex-end;
     }
 
-    .cmb-modal-overlay.active .cmb-modal {
+    .lcbw-modal-overlay.active .lcbw-modal {
         transform: translateY(0);
     }
     
-    .cmb-floating-btn {
+    .lcbw-floating-btn {
         bottom: 20px;
         right: 20px;
         padding: 12px 20px;

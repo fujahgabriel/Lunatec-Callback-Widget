@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Simple Call Me Back
+ * Plugin Name: Lunatec Callback Widget
  * Description: A plugin to allow visitors to request a callback via a modal form.
  * Version: 1.0.2
  * Requires at least: 6.0
@@ -8,25 +8,25 @@
  * Author: Fujah Gabriel
  * License: GPL2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: simple-call-me-back
+ * Text Domain: lunatec-callback-widget
  * Domain Path: /languages
- * github: https://github.com/fujahgabriel/simple-call-me-back-wp-plugin
+ * github: https://github.com/fujahgabriel/lunatec-callback-widget
  */
 
 if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
-class CallMeBackPlugin {
+class LCBW_CallbackWidget {
 
     const VERSION = '1.0.2';
-    const PLUGIN_NAME = 'Simple Call Me Back';
+    const PLUGIN_NAME = 'Lunatec Callback Widget';
     const SPONSOR_URL = 'https://fujahgabriel.xyz/sponsor';
     private $table_name;
 
     public function __construct() {
         global $wpdb;
-        $this->table_name = $wpdb->prefix . 'cmb_requests';
+        $this->table_name = $wpdb->prefix . 'lcbw_requests';
 
         // Hooks
         register_activation_hook(__FILE__, array($this, 'activate'));
@@ -36,14 +36,14 @@ class CallMeBackPlugin {
         add_action('wp_footer', array($this, 'render_frontend'));
         
         // AJAX
-        add_action('wp_ajax_cmb_submit_request', array($this, 'handle_submission'));
-        add_action('wp_ajax_nopriv_cmb_submit_request', array($this, 'handle_submission'));
+        add_action('wp_ajax_lcbw_submit_request', array($this, 'handle_submission'));
+        add_action('wp_ajax_nopriv_lcbw_submit_request', array($this, 'handle_submission'));
 
         // Export
         add_action('admin_init', array($this, 'handle_csv_export'));
 
         // Shortcode
-        add_shortcode('call_me_back', array($this, 'shortcode_button'));
+        add_shortcode('lcbw_callback_button', array($this, 'shortcode_button'));
     }
 
     /**
@@ -76,27 +76,27 @@ class CallMeBackPlugin {
             self::PLUGIN_NAME,
             self::PLUGIN_NAME,
             'manage_options',
-            'simple-call-me-back',
+            'lcbw-callback-widget',
             array($this, 'requests_page'),
             'dashicons-phone',
             26
         );
 
         add_submenu_page(
-            'simple-call-me-back',
+            'lcbw-callback-widget',
             'Requests',
             'Requests',
             'manage_options',
-            'simple-call-me-back',
+            'lcbw-callback-widget',
             array($this, 'requests_page')
         );
 
         add_submenu_page(
-            'simple-call-me-back',
+            'lcbw-callback-widget',
             'Settings',
             'Settings',
             'manage_options',
-            'simple-call-me-back-settings',
+            'lcbw-callback-widget-settings',
             array($this, 'settings_page')
         );
     }
@@ -105,101 +105,119 @@ class CallMeBackPlugin {
      * Register Settings
      */
     public function register_settings() {
-        register_setting('cmb_settings_group', 'cmb_button_text', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('cmb_settings_group', 'cmb_button_color', array('sanitize_callback' => 'sanitize_hex_color'));
-        register_setting('cmb_settings_group', 'cmb_button_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
-        register_setting('cmb_settings_group', 'cmb_modal_title', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('cmb_settings_group', 'cmb_modal_subtext', array('sanitize_callback' => 'sanitize_textarea_field'));
-        register_setting('cmb_settings_group', 'cmb_submit_button_color', array('sanitize_callback' => 'sanitize_hex_color'));
-        register_setting('cmb_settings_group', 'cmb_submit_button_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
-        register_setting('cmb_settings_group', 'cmb_modal_footer_text', array('sanitize_callback' => 'wp_kses_post'));
-        register_setting('cmb_settings_group', 'cmb_modal_footer_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
-        register_setting('cmb_settings_group', 'cmb_modal_size', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('cmb_settings_group', 'cmb_show_floating_button', array('sanitize_callback' => 'absint'));
-        register_setting('cmb_settings_group', 'cmb_float_position', array('sanitize_callback' => 'sanitize_text_field'));
-        register_setting('cmb_settings_group', 'cmb_float_margin_x', array('sanitize_callback' => 'absint'));
-        register_setting('cmb_settings_group', 'cmb_float_margin_y', array('sanitize_callback' => 'absint'));
+        register_setting('lcbw_settings_group', 'lcbw_button_text', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('lcbw_settings_group', 'lcbw_button_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('lcbw_settings_group', 'lcbw_button_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('lcbw_settings_group', 'lcbw_modal_title', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('lcbw_settings_group', 'lcbw_modal_subtext', array('sanitize_callback' => 'sanitize_textarea_field'));
+        register_setting('lcbw_settings_group', 'lcbw_submit_button_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('lcbw_settings_group', 'lcbw_submit_button_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('lcbw_settings_group', 'lcbw_modal_footer_text', array('sanitize_callback' => 'wp_kses_post'));
+        register_setting('lcbw_settings_group', 'lcbw_modal_footer_text_color', array('sanitize_callback' => 'sanitize_hex_color'));
+        register_setting('lcbw_settings_group', 'lcbw_modal_size', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('lcbw_settings_group', 'lcbw_show_floating_button', array('sanitize_callback' => 'absint'));
+        register_setting('lcbw_settings_group', 'lcbw_float_position', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('lcbw_settings_group', 'lcbw_float_margin_x', array('sanitize_callback' => 'absint'));
+        register_setting('lcbw_settings_group', 'lcbw_float_margin_y', array('sanitize_callback' => 'absint'));
         // HubSpot Settings
-        register_setting('cmb_settings_group', 'cmb_enable_hubspot_sync', array('sanitize_callback' => 'absint'));
-        register_setting('cmb_settings_group', 'cmb_hubspot_api_key', array('sanitize_callback' => 'sanitize_text_field'));
+        register_setting('lcbw_settings_group', 'lcbw_enable_hubspot_sync', array('sanitize_callback' => 'absint'));
+        register_setting('lcbw_settings_group', 'lcbw_hubspot_api_key', array('sanitize_callback' => 'sanitize_text_field'));
 
         // Email Settings
-        register_setting('cmb_settings_group', 'cmb_enable_email_notification', array('sanitize_callback' => 'absint'));
-        register_setting('cmb_settings_group', 'cmb_notification_email', array('sanitize_callback' => 'sanitize_email'));
+        register_setting('lcbw_settings_group', 'lcbw_enable_email_notification', array('sanitize_callback' => 'absint'));
+        register_setting('lcbw_settings_group', 'lcbw_notification_email', array('sanitize_callback' => 'sanitize_email'));
 
         // Slack Settings
-        register_setting('cmb_settings_group', 'cmb_enable_slack_notification', array('sanitize_callback' => 'absint'));
-        register_setting('cmb_settings_group', 'cmb_slack_webhook_url', array('sanitize_callback' => 'esc_url_raw'));
+        register_setting('lcbw_settings_group', 'lcbw_enable_slack_notification', array('sanitize_callback' => 'absint'));
+        register_setting('lcbw_settings_group', 'lcbw_slack_webhook_url', array('sanitize_callback' => 'esc_url_raw'));
     }
 
     /**
      * Enqueue Scripts and Styles
      */
     public function enqueue_scripts() {
-        wp_enqueue_style('cmb-style', plugin_dir_url(__FILE__) . 'assets/css/style.css');
-        wp_enqueue_style('intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/css/intlTelInput.css');
+        wp_enqueue_style('lcbw-style', plugin_dir_url(__FILE__) . 'assets/css/style.css');
+        wp_enqueue_style('lcbw-intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/css/intlTelInput.min.css');
         wp_enqueue_style('dashicons');
         
         // Dynamic styles from settings
-        $bg_color = get_option('cmb_button_color', '#0073aa');
-        $text_color = get_option('cmb_button_text_color', '#ffffff');
+        $bg_color = get_option('lcbw_button_color', '#0073aa');
+        $text_color = get_option('lcbw_button_text_color', '#ffffff');
         
-        $submit_bg_color = get_option('cmb_submit_button_color', '#0073aa');
-        $submit_text_color = get_option('cmb_submit_button_text_color', '#ffffff');
+        $submit_bg_color = get_option('lcbw_submit_button_color', '#0073aa');
+        $submit_text_color = get_option('lcbw_submit_button_text_color', '#ffffff');
 
         // Handle Button Position
-        $position = get_option('cmb_float_position', 'bottom-right');
-        $margin_x = intval(get_option('cmb_float_margin_x', '30'));
-        $margin_y = intval(get_option('cmb_float_margin_y', '30'));
+        $position = get_option('lcbw_float_position', 'bottom-right');
+        $margin_x = intval(get_option('lcbw_float_margin_x', '30'));
+        $margin_y = intval(get_option('lcbw_float_margin_y', '30'));
+        
+        // For mobile, use smaller margins but respect custom settings (minimum 15px for usability)
+        $mobile_margin_x = max(15, $margin_x - 10);
+        $mobile_margin_y = max(15, $margin_y - 10);
+        
         $pos_css = '';
+        $mobile_pos_css = '';
         
         switch ($position) {
             case 'top-left':
                 $pos_css = "top: {$margin_y}px; left: {$margin_x}px; bottom: auto; right: auto;";
+                $mobile_pos_css = "top: {$mobile_margin_y}px; left: {$mobile_margin_x}px; bottom: auto; right: auto;";
                 break;
             case 'top-right':
                 $pos_css = "top: {$margin_y}px; right: {$margin_x}px; bottom: auto; left: auto;";
+                $mobile_pos_css = "top: {$mobile_margin_y}px; right: {$mobile_margin_x}px; bottom: auto; left: auto;";
                 break;
             case 'bottom-left':
                 $pos_css = "bottom: {$margin_y}px; left: {$margin_x}px; top: auto; right: auto;";
+                $mobile_pos_css = "bottom: {$mobile_margin_y}px; left: {$mobile_margin_x}px; top: auto; right: auto;";
                 break;
             case 'bottom-right':
             default:
                 $pos_css = "bottom: {$margin_y}px; right: {$margin_x}px; top: auto; left: auto;";
+                $mobile_pos_css = "bottom: {$mobile_margin_y}px; right: {$mobile_margin_x}px; top: auto; left: auto;";
                 break;
         }
 
         $custom_css = "
-            .cmb-floating-btn {
+            .lcbw-floating-btn {
                 background-color: {$bg_color};
                 color: {$text_color};
                 {$pos_css}
             }
-            .cmb-submit-btn {
+            .lcbw-submit-btn {
                 background-color: {$submit_bg_color};
                 color: {$submit_text_color};
             }
-            .cmb-details { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-            .cmb-summary { cursor: pointer; font-size: 0.9em; color: #555; margin-bottom: 5px; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
-            .cmb-summary::-webkit-details-marker { display: none; }
-            .cmb-summary .dashicons { transition: transform 0.2s; font-size: 1.2em; width: 20px; height: 20px; }
-            .cmb-details[open] .cmb-summary .dashicons { transform: rotate(180deg); }
-            .cmb-details[open] .cmb-summary { margin-bottom: 15px; color: #333; }
+            .lcbw-details { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+            .lcbw-summary { cursor: pointer; font-size: 0.9em; color: #555; margin-bottom: 5px; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+            .lcbw-summary::-webkit-details-marker { display: none; }
+            .lcbw-summary .dashicons { transition: transform 0.2s; font-size: 1.2em; width: 20px; height: 20px; }
+            .lcbw-details[open] .lcbw-summary .dashicons { transform: rotate(180deg); }
+            .lcbw-details[open] .lcbw-summary { margin-bottom: 15px; color: #333; }
             /* Override intl-tel-input to match form style */
             .iti { width: 100%; }
             .iti__flag { background-image: url('assets/vendor/intl-tel-input/img/flags.png'); }
             @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
               .iti__flag { background-image: url('assets/vendor/intl-tel-input/img/flags@2x.png'); }
             }
+            /* Mobile positioning */
+            @media (max-width: 480px) {
+                .lcbw-floating-btn {
+                    {$mobile_pos_css}
+                    padding: 12px 20px;
+                    font-size: 14px;
+                }
+            }
         ";
-        wp_add_inline_style('cmb-style', $custom_css);
+        wp_add_inline_style('lcbw-style', $custom_css);
 
-        wp_enqueue_script('intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/intlTelInput.min.js', array(), '17.0.8', true);
-        wp_enqueue_script('cmb-script', plugin_dir_url(__FILE__) . 'assets/js/script.js', array('intl-tel-input'), self::VERSION, true);
+        wp_enqueue_script('lcbw-intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/intlTelInput.min.js', array(), '17.0.8', true);
+        wp_enqueue_script('lcbw-script', plugin_dir_url(__FILE__) . 'assets/js/script.js', array('lcbw-intl-tel-input'), self::VERSION, true);
         
-        wp_localize_script('cmb-script', 'cmb_obj', array(
+        wp_localize_script('lcbw-script', 'lcbw_obj', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('cmb_submit_request_nonce'),
+            'nonce' => wp_create_nonce('lcbw_submit_request_nonce'),
             'utils_url' => plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/utils.js'
         ));
     }
@@ -208,15 +226,15 @@ class CallMeBackPlugin {
      * Render Frontend HTML (Floating Button)
      */
     public function render_frontend() {
-        if (!get_option('cmb_show_floating_button', '1')) {
+        if (!get_option('lcbw_show_floating_button', '1')) {
             $this->render_modal_markup(); // Still need markup if shortcode is used
             return;
         }
 
-        $btn_text = get_option('cmb_button_text', 'Request Callback');
+        $btn_text = get_option('lcbw_button_text', 'Request Callback');
         ?>
-        <button id="cmb-floating-btn" class="cmb-floating-btn">
-            <span class="cmb-icon">
+        <button id="lcbw-floating-btn" class="lcbw-floating-btn">
+            <span class="lcbw-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                 </svg>
@@ -233,19 +251,19 @@ class CallMeBackPlugin {
      */
     public function shortcode_button($atts) {
         $atts = shortcode_atts(array(
-            'text' => get_option('cmb_button_text', 'Request Callback'),
+            'text' => get_option('lcbw_button_text', 'Request Callback'),
             'class' => 'button'
         ), $atts);
 
         // Ensure scripts are enqueued even if shortcode is used
-        wp_enqueue_script('cmb-script');
-        wp_enqueue_style('cmb-style');
+        wp_enqueue_script('lcbw-script');
+        wp_enqueue_style('lcbw-style');
         
         // We ensure modal markup is present in footer (handled by wp_footer hook logic, 
         // but if wp_footer isn't called or floating is disabled, we must ensure it's there. 
         // The wp_footer hook `render_frontend` handles the modal markup even if floating is disabled.)
 
-        return '<button class="cmb-trigger-btn ' . esc_attr($atts['class']) . '">' . esc_html($atts['text']) . '</button>';
+        return '<button class="lcbw-trigger-btn ' . esc_attr($atts['class']) . '">' . esc_html($atts['text']) . '</button>';
     }
 
     /**
@@ -257,50 +275,50 @@ class CallMeBackPlugin {
         if ($rendered) return;
         $rendered = true;
 
-        $modal_title = get_option('cmb_modal_title', 'Request a Call Back');
-        $modal_subtext = get_option('cmb_modal_subtext', 'Please fill out the form below and we will get back to you shortly.');
-        $modal_size = get_option('cmb_modal_size', 'medium');
+        $modal_title = get_option('lcbw_modal_title', 'Request a Call Back');
+        $modal_subtext = get_option('lcbw_modal_subtext', 'Please fill out the form below and we will get back to you shortly.');
+        $modal_size = get_option('lcbw_modal_size', 'medium');
         ?>
-        <div id="cmb-modal-overlay" class="cmb-modal-overlay">
-            <div class="cmb-modal cmb-size-<?php echo esc_attr($modal_size); ?>">
-                <span class="cmb-modal-close">&times;</span>
-                <h3 class="cmb-modal-title"><?php echo esc_html($modal_title); ?></h3>
+        <div id="lcbw-modal-overlay" class="lcbw-modal-overlay">
+            <div class="lcbw-modal lcbw-size-<?php echo esc_attr($modal_size); ?>">
+                <span class="lcbw-modal-close">&times;</span>
+                <h3 class="lcbw-modal-title"><?php echo esc_html($modal_title); ?></h3>
                 <?php if (!empty($modal_subtext)): ?>
-                    <p class="cmb-modal-subtext"><?php echo esc_html($modal_subtext); ?></p>
+                    <p class="lcbw-modal-subtext"><?php echo esc_html($modal_subtext); ?></p>
                 <?php endif; ?>
                 
-                <form id="cmb-callback-form">
-                    <div class="cmb-form-group">
-                        <label for="cmb-name">Name *</label>
-                        <input type="text" id="cmb-name" name="cmb_name" placeholder="e.g. John Doe" required>
+                <form id="lcbw-callback-form">
+                    <div class="lcbw-form-group">
+                        <label for="lcbw-name">Name *</label>
+                        <input type="text" id="lcbw-name" name="lcbw_name" placeholder="e.g. John Doe" required>
                     </div>
                     
-                    <div class="cmb-form-group">
-                        <label for="cmb-phone">Phone Number (International) *</label>
-                        <input type="tel" id="cmb-phone" name="cmb_phone" placeholder="" required>
+                    <div class="lcbw-form-group">
+                        <label for="lcbw-phone">Phone Number (International) *</label>
+                        <input type="tel" id="lcbw-phone" name="lcbw_phone" placeholder="" required>
                     </div>
 
-                    <details class="cmb-details">
-                        <summary class="cmb-summary">Additional Info (Position, Company) <span class="dashicons dashicons-arrow-down-alt2"></span></summary>
-                        <div class="cmb-form-group">
-                            <label for="cmb-position">Position</label>
-                            <input type="text" id="cmb-position" name="cmb_position" placeholder="e.g. Marketing Manager">
+                    <details class="lcbw-details">
+                        <summary class="lcbw-summary">Additional Info (Position, Company) <span class="dashicons dashicons-arrow-down-alt2"></span></summary>
+                        <div class="lcbw-form-group">
+                            <label for="lcbw-position">Position</label>
+                            <input type="text" id="lcbw-position" name="lcbw_position" placeholder="e.g. Marketing Manager">
                         </div>
 
-                        <div class="cmb-form-group">
-                            <label for="cmb-company">Company Name</label>
-                            <input type="text" id="cmb-company" name="cmb_company" placeholder="e.g. Acme Corp">
+                        <div class="lcbw-form-group">
+                            <label for="lcbw-company">Company Name</label>
+                            <input type="text" id="lcbw-company" name="lcbw_company" placeholder="e.g. Acme Corp">
                         </div>
                     </details>
 
-                    <button type="submit" class="cmb-submit-btn">Submit Request</button>
-                    <div id="cmb-message" class="cmb-message"></div>
+                    <button type="submit" class="lcbw-submit-btn">Submit Request</button>
+                    <div id="lcbw-message" class="lcbw-message"></div>
                     
                     <?php 
-                    $footer_text = get_option('cmb_modal_footer_text');
-                    $footer_color = get_option('cmb_modal_footer_text_color', '#666666');
+                    $footer_text = get_option('lcbw_modal_footer_text');
+                    $footer_color = get_option('lcbw_modal_footer_text_color', '#666666');
                     if (!empty($footer_text)): ?>
-                        <p class="cmb-modal-footer-text" style="text-align: center; margin-top: 15px; font-size: 0.9em; color: <?php echo esc_attr($footer_color); ?>;">
+                        <p class="lcbw-modal-footer-text" style="text-align: center; margin-top: 15px; font-size: 0.9em; color: <?php echo esc_attr($footer_color); ?>;">
                             <?php echo wp_kses_post($footer_text); ?>
                         </p>
                     <?php endif; ?>
@@ -314,15 +332,20 @@ class CallMeBackPlugin {
      * Handle AJAX Submission
      */
     public function handle_submission() {
-        check_ajax_referer('cmb_submit_request_nonce', 'nonce');
+        check_ajax_referer('lcbw_submit_request_nonce', 'nonce');
 
-        $name = sanitize_text_field(wp_unslash($_POST['cmb_name']));
-        $phone = sanitize_text_field(wp_unslash($_POST['cmb_phone']));
-        $position = sanitize_text_field(wp_unslash($_POST['cmb_position']));
-        $company = sanitize_text_field(wp_unslash($_POST['cmb_company']));
+        // Debug: Log what we're receiving
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('LCBW Form Data Received: ' . print_r($_POST, true));
+        }
+
+        $name = isset($_POST['lcbw_name']) ? sanitize_text_field(wp_unslash($_POST['lcbw_name'])) : '';
+        $phone = isset($_POST['lcbw_phone']) ? sanitize_text_field(wp_unslash($_POST['lcbw_phone'])) : '';
+        $position = isset($_POST['lcbw_position']) ? sanitize_text_field(wp_unslash($_POST['lcbw_position'])) : '';
+        $company = isset($_POST['lcbw_company']) ? sanitize_text_field(wp_unslash($_POST['lcbw_company'])) : '';
 
         if (empty($name) || empty($phone)) {
-            wp_send_json_error(array('message' => 'Name and Phone are required.'));
+            wp_send_json_error(array('message' => 'Name and Phone are required. Received: name=' . $name . ', phone=' . $phone));
         }
 
         global $wpdb;
@@ -339,17 +362,17 @@ class CallMeBackPlugin {
 
         if ($result) {
             // Trigger HubSpot Sync
-            if (get_option('cmb_enable_hubspot_sync') && get_option('cmb_hubspot_api_key')) {
+            if (get_option('lcbw_enable_hubspot_sync') && get_option('lcbw_hubspot_api_key')) {
                 $this->sync_to_hubspot($name, $phone, $position, $company);
             }
 
             // Trigger Email Notification
-            if (get_option('cmb_enable_email_notification')) {
+            if (get_option('lcbw_enable_email_notification')) {
                 $this->send_email_notification($name, $phone, $position, $company);
             }
 
             // Trigger Slack Notification
-            if (get_option('cmb_enable_slack_notification') && get_option('cmb_slack_webhook_url')) {
+            if (get_option('lcbw_enable_slack_notification') && get_option('lcbw_slack_webhook_url')) {
                 $this->send_slack_notification($name, $phone, $position, $company);
             }
 
@@ -363,7 +386,7 @@ class CallMeBackPlugin {
      * Send data to HubSpot
      */
     private function sync_to_hubspot($name, $phone, $position, $company) {
-        $token = get_option('cmb_hubspot_api_key');
+        $token = get_option('lcbw_hubspot_api_key');
         if (empty($token)) return;
 
         // Split name into First/Last for better CRM data
@@ -403,7 +426,7 @@ class CallMeBackPlugin {
      * Send Email Notification
      */
     private function send_email_notification($name, $phone, $position, $company) {
-        $to = get_option('cmb_notification_email', get_option('admin_email'));
+        $to = get_option('lcbw_notification_email', get_option('admin_email'));
         if (!is_email($to)) return;
 
         $subject = 'New Message: ' . self::PLUGIN_NAME;
@@ -424,7 +447,7 @@ class CallMeBackPlugin {
      * Send Slack Notification
      */
     private function send_slack_notification($name, $phone, $position, $company) {
-        $webhook_url = get_option('cmb_slack_webhook_url');
+        $webhook_url = get_option('lcbw_slack_webhook_url');
         if (empty($webhook_url)) return;
 
         $text = "*New Callback Request from " . self::PLUGIN_NAME . "*\n";
@@ -460,25 +483,25 @@ class CallMeBackPlugin {
 
         // Handle Delete
         if ($action == 'delete' && $id > 0) {
-            check_admin_referer('cmb_delete_request_' . $id);
+            check_admin_referer('lcbw_delete_request_' . $id);
             $wpdb->delete($this->table_name, array('id' => $id));
             echo '<div class="notice notice-success is-dismissible"><p>Request deleted.</p></div>';
             $action = 'list';
         }
 
         // Handle Edit Save
-        if (isset($_POST['cmb_action']) && $_POST['cmb_action'] == 'update_request') {
+        if (isset($_POST['lcbw_action']) && $_POST['lcbw_action'] == 'update_request') {
              $id = isset($_POST['request_id']) ? intval($_POST['request_id']) : 0;
-             check_admin_referer('cmb_edit_request_' . $id);
+             check_admin_referer('lcbw_edit_request_' . $id);
              
              $wpdb->update(
                 $this->table_name,
                 array(
-                    'name' => sanitize_text_field(wp_unslash($_POST['cmb_name'])),
-                    'phone' => sanitize_text_field(wp_unslash($_POST['cmb_phone'])),
-                    'position' => sanitize_text_field(wp_unslash($_POST['cmb_position'])),
-                    'company' => sanitize_text_field(wp_unslash($_POST['cmb_company'])),
-                    'status' => sanitize_text_field(wp_unslash($_POST['cmb_status']))
+                    'name' => sanitize_text_field(wp_unslash($_POST['lcbw_name'])),
+                    'phone' => sanitize_text_field(wp_unslash($_POST['lcbw_phone'])),
+                    'position' => sanitize_text_field(wp_unslash($_POST['lcbw_position'])),
+                    'company' => sanitize_text_field(wp_unslash($_POST['lcbw_company'])),
+                    'status' => sanitize_text_field(wp_unslash($_POST['lcbw_status']))
                 ),
                 array('id' => $id)
              );
@@ -503,10 +526,10 @@ class CallMeBackPlugin {
 
         // Custom CSS for Status Badges
         echo '<style>
-            .cmb-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; }
-            .cmb-status-new { background-color: #2271b1; }
-            .cmb-status-contacted { background-color: #dba617; }
-            .cmb-status-closed { background-color: #787c82; }
+            .lcbw-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; }
+            .lcbw-status-new { background-color: #2271b1; }
+            .lcbw-status-contacted { background-color: #dba617; }
+            .lcbw-status-closed { background-color: #787c82; }
         </style>';
 
         // Handle pagination
@@ -527,8 +550,8 @@ class CallMeBackPlugin {
         <div class="wrap">
             <h1>Call Back Requests</h1>
             
-            <form method="post" action="<?php echo esc_url(admin_url('admin.php?action=cmb_export_csv')); ?>" style="float: right; margin-bottom: 10px;">
-                <?php wp_nonce_field('cmb_export_csv_nonce', 'cmb_export_nonce'); ?>
+            <form method="post" action="<?php echo esc_url(admin_url('admin.php?action=lcbw_export_csv')); ?>" style="float: right; margin-bottom: 10px;">
+                <?php wp_nonce_field('lcbw_export_csv_nonce', 'lcbw_export_nonce'); ?>
                 <button type="submit" class="button button-primary">Export to CSV</button>
             </form>
             <div style="clear: both;"></div>
@@ -556,15 +579,15 @@ class CallMeBackPlugin {
                                 <td><?php echo esc_html($row->company); ?></td>
                                 <td>
                                     <?php 
-                                    $status_class = 'cmb-status-' . sanitize_html_class($row->status); 
+                                    $status_class = 'lcbw-status-' . sanitize_html_class($row->status); 
                                     $status_label = ucfirst($row->status);
                                     ?>
-                                    <span class="cmb-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span>
+                                    <span class="lcbw-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span>
                                 </td>
                                 <td>
                                     <?php 
-                                    $edit_url = add_query_arg(array('page' => 'simple-call-me-back', 'action' => 'edit', 'id' => $row->id), admin_url('admin.php'));
-                                    $delete_url = wp_nonce_url(add_query_arg(array('page' => 'simple-call-me-back', 'action' => 'delete', 'id' => $row->id), admin_url('admin.php')), 'cmb_delete_request_' . $row->id);
+                                    $edit_url = add_query_arg(array('page' => 'lcbw-callback-widget', 'action' => 'edit', 'id' => $row->id), admin_url('admin.php'));
+                                    $delete_url = wp_nonce_url(add_query_arg(array('page' => 'lcbw-callback-widget', 'action' => 'delete', 'id' => $row->id), admin_url('admin.php')), 'lcbw_delete_request_' . $row->id);
                                     ?>
                                     <a href="<?php echo esc_url($edit_url); ?>">Edit</a> | 
                                     <a href="<?php echo esc_url($delete_url); ?>" onclick="return confirm('Are you sure you want to delete this request?');" style="color: #a00;">Delete</a>
@@ -586,8 +609,8 @@ class CallMeBackPlugin {
                         echo wp_kses_post(paginate_links(array(
                             'base' => add_query_arg('paged', '%#%'),
                             'format' => '',
-                            'prev_text' => __('&laquo;', 'simple-call-me-back'),
-                            'next_text' => __('&raquo;', 'simple-call-me-back'),
+                            'prev_text' => __('&laquo;', 'lunatec-callback-widget'),
+                            'next_text' => __('&raquo;', 'lunatec-callback-widget'),
                             'total' => $total_pages,
                             'current' => $current_page
                         )));
@@ -614,34 +637,34 @@ class CallMeBackPlugin {
         ?>
         <div class="wrap">
             <h1>Edit Request</h1>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=simple-call-me-back')); ?>" class="page-title-action">Back to List</a>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=lcbw-callback-widget')); ?>" class="page-title-action">Back to List</a>
             
             <form method="post">
-                <input type="hidden" name="cmb_action" value="update_request">
+                <input type="hidden" name="lcbw_action" value="update_request">
                 <input type="hidden" name="request_id" value="<?php echo esc_attr($id); ?>">
-                <?php wp_nonce_field('cmb_edit_request_' . $id); ?>
+                <?php wp_nonce_field('lcbw_edit_request_' . $id); ?>
 
                 <table class="form-table">
                     <tr>
-                        <th><label for="cmb_name">Name</label></th>
-                        <td><input type="text" name="cmb_name" id="cmb_name" value="<?php echo esc_attr($item->name); ?>" class="regular-text" required></td>
+                        <th><label for="lcbw_name">Name</label></th>
+                        <td><input type="text" name="lcbw_name" id="lcbw_name" value="<?php echo esc_attr($item->name); ?>" class="regular-text" required></td>
                     </tr>
                     <tr>
-                        <th><label for="cmb_phone">Phone</label></th>
-                        <td><input type="text" name="cmb_phone" id="cmb_phone" value="<?php echo esc_attr($item->phone); ?>" class="regular-text" required></td>
+                        <th><label for="lcbw_phone">Phone</label></th>
+                        <td><input type="text" name="lcbw_phone" id="lcbw_phone" value="<?php echo esc_attr($item->phone); ?>" class="regular-text" required></td>
                     </tr>
                     <tr>
-                        <th><label for="cmb_position">Position</label></th>
-                        <td><input type="text" name="cmb_position" id="cmb_position" value="<?php echo esc_attr($item->position); ?>" class="regular-text"></td>
+                        <th><label for="lcbw_position">Position</label></th>
+                        <td><input type="text" name="lcbw_position" id="lcbw_position" value="<?php echo esc_attr($item->position); ?>" class="regular-text"></td>
                     </tr>
                     <tr>
-                        <th><label for="cmb_company">Company</label></th>
-                        <td><input type="text" name="cmb_company" id="cmb_company" value="<?php echo esc_attr($item->company); ?>" class="regular-text"></td>
+                        <th><label for="lcbw_company">Company</label></th>
+                        <td><input type="text" name="lcbw_company" id="lcbw_company" value="<?php echo esc_attr($item->company); ?>" class="regular-text"></td>
                     </tr>
                     <tr>
-                        <th><label for="cmb_status">Status</label></th>
+                        <th><label for="lcbw_status">Status</label></th>
                         <td>
-                            <select name="cmb_status" id="cmb_status">
+                            <select name="lcbw_status" id="lcbw_status">
                                 <option value="new" <?php selected($item->status, 'new'); ?>>New</option>
                                 <option value="contacted" <?php selected($item->status, 'contacted'); ?>>Contacted</option>
                                 <option value="closed" <?php selected($item->status, 'closed'); ?>>Closed</option>
@@ -668,76 +691,76 @@ class CallMeBackPlugin {
         <div class="wrap">
             <h1><?php echo esc_html(self::PLUGIN_NAME); ?> Settings</h1>
             <form method="post" action="options.php">
-                <?php settings_fields('cmb_settings_group'); ?>
-                <?php do_settings_sections('cmb_settings_group'); ?>
+                <?php settings_fields('lcbw_settings_group'); ?>
+                <?php do_settings_sections('lcbw_settings_group'); ?>
                 
                 <table class="form-table">
                     <tr valign="top">
                         <th scope="row">Button Text</th>
-                        <td><input type="text" name="cmb_button_text" value="<?php echo esc_attr(get_option('cmb_button_text', 'Request Callback')); ?>" /></td>
+                        <td><input type="text" name="lcbw_button_text" value="<?php echo esc_attr(get_option('lcbw_button_text', 'Request Callback')); ?>" /></td>
                     </tr>
                     
                     <tr valign="top">
                         <th scope="row">Button Background Color</th>
-                        <td><input type="color" name="cmb_button_color" value="<?php echo esc_attr(get_option('cmb_button_color', '#0073aa')); ?>" /></td>
+                        <td><input type="color" name="lcbw_button_color" value="<?php echo esc_attr(get_option('lcbw_button_color', '#0073aa')); ?>" /></td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row">Button Text Color</th>
-                        <td><input type="color" name="cmb_button_text_color" value="<?php echo esc_attr(get_option('cmb_button_text_color', '#ffffff')); ?>" /></td>
+                        <td><input type="color" name="lcbw_button_text_color" value="<?php echo esc_attr(get_option('lcbw_button_text_color', '#ffffff')); ?>" /></td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row">Modal Title</th>
-                        <td><input type="text" name="cmb_modal_title" value="<?php echo esc_attr(get_option('cmb_modal_title', 'Request a Call Back')); ?>" /></td>
+                        <td><input type="text" name="lcbw_modal_title" value="<?php echo esc_attr(get_option('lcbw_modal_title', 'Request a Call Back')); ?>" /></td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row">Modal Subtext</th>
-                        <td><textarea name="cmb_modal_subtext" rows="3" cols="50"><?php echo esc_textarea(get_option('cmb_modal_subtext', 'Please fill out the form below and we will get back to you shortly.')); ?></textarea></td>
+                        <td><textarea name="lcbw_modal_subtext" rows="3" cols="50"><?php echo esc_textarea(get_option('lcbw_modal_subtext', 'Please fill out the form below and we will get back to you shortly.')); ?></textarea></td>
                     </tr>
                     
                     <tr valign="top">
                         <th scope="row">Submit Button Color</th>
-                        <td><input type="color" name="cmb_submit_button_color" value="<?php echo esc_attr(get_option('cmb_submit_button_color', '#0073aa')); ?>" /></td>
+                        <td><input type="color" name="lcbw_submit_button_color" value="<?php echo esc_attr(get_option('lcbw_submit_button_color', '#0073aa')); ?>" /></td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row">Submit Button Text Color</th>
-                        <td><input type="color" name="cmb_submit_button_text_color" value="<?php echo esc_attr(get_option('cmb_submit_button_text_color', '#ffffff')); ?>" /></td>
+                        <td><input type="color" name="lcbw_submit_button_text_color" value="<?php echo esc_attr(get_option('lcbw_submit_button_text_color', '#ffffff')); ?>" /></td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row">Text Below Submit Button</th>
                         <td>
-                            <input type="text" name="cmb_modal_footer_text" value="<?php echo esc_attr(get_option('cmb_modal_footer_text')); ?>" class="regular-text" />
+                            <input type="text" name="lcbw_modal_footer_text" value="<?php echo esc_attr(get_option('lcbw_modal_footer_text')); ?>" class="regular-text" />
                             <p class="description">e.g. Call us anytime on <a href="tel:+123456789">+1 234 567 89</a></p>
                         </td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row">Footer Text Color</th>
-                        <td><input type="color" name="cmb_modal_footer_text_color" value="<?php echo esc_attr(get_option('cmb_modal_footer_text_color', '#666666')); ?>" /></td>
+                        <td><input type="color" name="lcbw_modal_footer_text_color" value="<?php echo esc_attr(get_option('lcbw_modal_footer_text_color', '#666666')); ?>" /></td>
                     </tr>
 
                     <tr valign="top">
                         <th scope="row"></th>Modal Size</th>
                         <td>
-                            <select name="cmb_modal_size">
-                                <option value="small" <?php selected(get_option('cmb_modal_size', 'medium'), 'small'); ?>>Small</option>
-                                <option value="medium" <?php selected(get_option('cmb_modal_size', 'medium'), 'medium'); ?>>Medium</option>
-                                <option value="large" <?php selected(get_option('cmb_modal_size', 'medium'), 'large'); ?>>Large</option>
+                            <select name="lcbw_modal_size">
+                                <option value="small" <?php selected(get_option('lcbw_modal_size', 'medium'), 'small'); ?>>Small</option>
+                                <option value="medium" <?php selected(get_option('lcbw_modal_size', 'medium'), 'medium'); ?>>Medium</option>
+                                <option value="large" <?php selected(get_option('lcbw_modal_size', 'medium'), 'large'); ?>>Large</option>
                             </select>
                         </td>
                     </tr>
                     <tr valign="top">
                         <th scope="row">Floating Button Position</th>
                         <td>
-                            <select name="cmb_float_position">
-                                <option value="bottom-right" <?php selected(get_option('cmb_float_position', 'bottom-right'), 'bottom-right'); ?>>Bottom Right</option>
-                                <option value="bottom-left" <?php selected(get_option('cmb_float_position', 'bottom-right'), 'bottom-left'); ?>>Bottom Left</option>
-                                <option value="top-right" <?php selected(get_option('cmb_float_position', 'bottom-right'), 'top-right'); ?>>Top Right</option>
-                                <option value="top-left" <?php selected(get_option('cmb_float_position', 'bottom-right'), 'top-left'); ?>>Top Left</option>
+                            <select name="lcbw_float_position">
+                                <option value="bottom-right" <?php selected(get_option('lcbw_float_position', 'bottom-right'), 'bottom-right'); ?>>Bottom Right</option>
+                                <option value="bottom-left" <?php selected(get_option('lcbw_float_position', 'bottom-right'), 'bottom-left'); ?>>Bottom Left</option>
+                                <option value="top-right" <?php selected(get_option('lcbw_float_position', 'bottom-right'), 'top-right'); ?>>Top Right</option>
+                                <option value="top-left" <?php selected(get_option('lcbw_float_position', 'bottom-right'), 'top-left'); ?>>Top Left</option>
                             </select>
                         </td>
                     </tr>
@@ -745,7 +768,7 @@ class CallMeBackPlugin {
                     <tr valign="top">
                         <th scope="row">Margin X (px)</th>
                         <td>
-                            <input type="number" name="cmb_float_margin_x" value="<?php echo esc_attr(get_option('cmb_float_margin_x', '30')); ?>" style="width: 80px;" />
+                            <input type="number" name="lcbw_float_margin_x" value="<?php echo esc_attr(get_option('lcbw_float_margin_x', '30')); ?>" style="width: 80px;" />
                             <p class="description">Horizontal distance from the edge (left or right).</p>
                         </td>
                     </tr>
@@ -753,7 +776,7 @@ class CallMeBackPlugin {
                     <tr valign="top">
                         <th scope="row">Margin Y (px)</th>
                         <td>
-                            <input type="number" name="cmb_float_margin_y" value="<?php echo esc_attr(get_option('cmb_float_margin_y', '30')); ?>" style="width: 80px;" />
+                            <input type="number" name="lcbw_float_margin_y" value="<?php echo esc_attr(get_option('lcbw_float_margin_y', '30')); ?>" style="width: 80px;" />
                             <p class="description">Vertical distance from the edge (top or bottom).</p>
                         </td>
                     </tr>
@@ -762,7 +785,7 @@ class CallMeBackPlugin {
                         <th scope="row">Enable Floating Button</th>
                         <td>
                             <label>
-                                <input type="checkbox" name="cmb_show_floating_button" value="1" <?php checked(get_option('cmb_show_floating_button', '1'), '1'); ?> />
+                                <input type="checkbox" name="lcbw_show_floating_button" value="1" <?php checked(get_option('lcbw_show_floating_button', '1'), '1'); ?> />
                                 Show floating button on all pages
                             </label>
                         </td>
@@ -777,7 +800,7 @@ class CallMeBackPlugin {
                         <th scope="row">Enable HubSpot Sync</th>
                         <td>
                             <label>
-                                <input type="checkbox" name="cmb_enable_hubspot_sync" value="1" <?php checked(get_option('cmb_enable_hubspot_sync'), '1'); ?> />
+                                <input type="checkbox" name="lcbw_enable_hubspot_sync" value="1" <?php checked(get_option('lcbw_enable_hubspot_sync'), '1'); ?> />
                                 Sync requests to HubSpot CRM
                             </label>
                         </td>
@@ -785,7 +808,7 @@ class CallMeBackPlugin {
                     <tr valign="top">
                         <th scope="row">HubSpot Access Token</th>
                         <td>
-                            <input type="password" name="cmb_hubspot_api_key" value="<?php echo esc_attr(get_option('cmb_hubspot_api_key')); ?>" class="regular-text" />
+                            <input type="password" name="lcbw_hubspot_api_key" value="<?php echo esc_attr(get_option('lcbw_hubspot_api_key')); ?>" class="regular-text" />
                             <p class="description">Enter your Private App Access Token (from HubSpot Settings > Integrations > Private Apps).</p>
                         </td>
                     </tr>
@@ -799,7 +822,7 @@ class CallMeBackPlugin {
                         <th scope="row">Enable Email</th>
                         <td>
                             <label>
-                                <input type="checkbox" name="cmb_enable_email_notification" value="1" <?php checked(get_option('cmb_enable_email_notification'), '1'); ?> />
+                                <input type="checkbox" name="lcbw_enable_email_notification" value="1" <?php checked(get_option('lcbw_enable_email_notification'), '1'); ?> />
                                 Send email notifications
                             </label>
                         </td>
@@ -807,7 +830,7 @@ class CallMeBackPlugin {
                     <tr valign="top">
                         <th scope="row">Recipient Email</th>
                         <td>
-                            <input type="email" name="cmb_notification_email" value="<?php echo esc_attr(get_option('cmb_notification_email', get_option('admin_email'))); ?>" class="regular-text" />
+                            <input type="email" name="lcbw_notification_email" value="<?php echo esc_attr(get_option('lcbw_notification_email', get_option('admin_email'))); ?>" class="regular-text" />
                             <p class="description">Enter the email address locally (Defaults to site admin email).</p>
                         </td>
                     </tr>
@@ -821,7 +844,7 @@ class CallMeBackPlugin {
                         <th scope="row">Enable Slack</th>
                         <td>
                             <label>
-                                <input type="checkbox" name="cmb_enable_slack_notification" value="1" <?php checked(get_option('cmb_enable_slack_notification'), '1'); ?> />
+                                <input type="checkbox" name="lcbw_enable_slack_notification" value="1" <?php checked(get_option('lcbw_enable_slack_notification'), '1'); ?> />
                                 Send Slack notifications
                             </label>
                         </td>
@@ -829,7 +852,7 @@ class CallMeBackPlugin {
                     <tr valign="top">
                         <th scope="row">Slack Webhook URL</th>
                         <td>
-                            <input type="url" name="cmb_slack_webhook_url" value="<?php echo esc_attr(get_option('cmb_slack_webhook_url')); ?>" class="regular-text" />
+                            <input type="url" name="lcbw_slack_webhook_url" value="<?php echo esc_attr(get_option('lcbw_slack_webhook_url')); ?>" class="regular-text" />
                             <p class="description">Paste your <a href="https://api.slack.com/messaging/webhooks" target="_blank">Incoming Webhook URL</a> here.</p>
                         </td>
                     </tr>
@@ -856,16 +879,16 @@ class CallMeBackPlugin {
      * Handle CSV Export
      */
     public function handle_csv_export() {
-        if (isset($_GET['action']) && sanitize_text_field(wp_unslash($_GET['action'])) == 'cmb_export_csv') {
+        if (isset($_GET['action']) && sanitize_text_field(wp_unslash($_GET['action'])) == 'lcbw_export_csv') {
             
             // Check permissions first
             if (!current_user_can('manage_options')) {
-                wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'simple-call-me-back'));
+                wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'lunatec-callback-widget'));
             }
 
             // Check nonce
-            if (!isset($_POST['cmb_export_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['cmb_export_nonce'])), 'cmb_export_csv_nonce')) {
-                wp_die(esc_html__('Security check failed', 'simple-call-me-back'));
+            if (!isset($_POST['lcbw_export_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['lcbw_export_nonce'])), 'lcbw_export_csv_nonce')) {
+                wp_die(esc_html__('Security check failed', 'lunatec-callback-widget'));
             }
 
             global $wpdb;
@@ -900,4 +923,4 @@ class CallMeBackPlugin {
     }
 }
 
-new CallMeBackPlugin();
+new LCBW_CallbackWidget();
