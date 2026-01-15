@@ -53,42 +53,71 @@ You can also place a callback request button inside any post or page using the s
 
 ## External Services
 
-This plugin may connect to the following external services when enabled in settings:
+This plugin may connect to external third-party services depending on your configuration. Below is a comprehensive list of all external services this plugin uses, what data is transmitted, and under which conditions:
 
 ### HubSpot CRM Integration
-When the HubSpot sync feature is enabled in plugin settings, this plugin connects to the HubSpot API to automatically create contacts from callback requests.
 
-**What data is sent**: Name, phone number, position, company name of visitors who submit callback requests.
-**When data is sent**: Only when a callback request is successfully submitted and HubSpot sync is enabled.
+**What the service is**: HubSpot is a customer relationship management (CRM) platform used for managing contacts and leads.
+
+**What it's used for**: When enabled, this plugin automatically creates or updates contact records in your HubSpot CRM whenever a visitor submits a callback request through the plugin's form.
+
+**What data is sent**: 
+- First name and last name (parsed from the full name field)
+- Phone number
+- Job title/position
+- Company name
+- Lifecycle stage (automatically set to "lead")
+
+**When data is sent**: Data is transmitted only when:
+1. A visitor successfully submits a callback request form
+2. HubSpot integration is enabled in the plugin settings
+3. A valid HubSpot API key is configured
+
 **Service Provider**: HubSpot, Inc.
 **API Endpoint**: https://api.hubapi.com/crm/v3/objects/contacts
 **Terms of Service**: https://legal.hubspot.com/terms-of-service
 **Privacy Policy**: https://legal.hubspot.com/privacy-policy
 
 ### Slack Integration
-When the Slack notification feature is enabled, this plugin sends webhook notifications to a configured Slack channel.
 
-**What data is sent**: Name, phone number, position, company name of visitors who submit callback requests.
-**When data is sent**: Only when a callback request is successfully submitted and Slack notifications are enabled.
-**Service Provider**: Slack Technologies, Inc.
+**What the service is**: Slack is a business communication platform that supports webhook notifications.
+
+**What it's used for**: When enabled, this plugin sends instant notifications to a specified Slack channel whenever a new callback request is submitted, allowing your team to respond quickly to leads.
+
+**What data is sent**:
+- Visitor's full name
+- Phone number
+- Job title/position (if provided)
+- Company name (if provided)
+- Notification that a new callback request was received
+
+**When data is sent**: Data is transmitted only when:
+1. A visitor successfully submits a callback request form
+2. Slack integration is enabled in the plugin settings
+3. A valid Slack webhook URL is configured
+
+**Service Provider**: Slack Technologies, LLC
 **Terms of Service**: https://slack.com/terms-of-service
 **Privacy Policy**: https://slack.com/privacy-policy
 
-**Note**: Email notifications are sent using WordPress's built-in wp_mail() function and do not connect to external services unless configured in your WordPress installation.
+### Email Notifications
 
-## Changelog
+**What the service is**: The plugin uses WordPress's built-in email functionality (`wp_mail()`) to send email notifications.
 
-### 1.0.2
-*   **New**: Added Slack and Email notification support.
-*   **Improvement**: Added status badges to the admin requests list.
+**What it's used for**: Sends email notifications to site administrators when new callback requests are submitted.
 
-### 1.0.1
-*   **New**: HubSpot Integration! You can now sync requests directly to HubSpot CRM.
-*   **New**: Added "Margin X" and "Margin Y" settings for precise positioning of the floating button.
-*   **Fixed**: Minor styling adjustments.
+**What data is sent**:
+- Visitor's full name
+- Phone number
+- Job title/position (if provided)
+- Company name (if provided)
 
-### 1.0.0
-*   Initial Release.
+**When data is sent**: Email notifications are sent only when:
+1. A visitor successfully submits a callback request form
+2. Email notifications are enabled in the plugin settings
+3. A valid notification email address is configured
+
+**Important Note**: Email notifications use WordPress's native `wp_mail()` function and do not directly connect to external services unless your WordPress installation is configured to use external email services (such as SendGrid, Mailgun, etc.). If you have configured WordPress to use external email services, those services' terms and privacy policies would apply.
 
 ## Screenshots
 
@@ -104,19 +133,29 @@ When the Slack notification feature is enabled, this plugin sends webhook notifi
 ## Frequently Asked Questions
 
 **Can I change the position of the floating button?**
-Yes, you can choose between Bottom Right, Bottom Left, Top Right, and Top Left in the settings page.
+Yes, you can choose between Bottom Right, Bottom Left, Top Right, and Top Left in the settings page. You can also fine-tune the positioning with specific X and Y margin values.
 
 **Where is the data stored?**
 The data is stored in your WordPress database in a custom table created by the plugin (`wp_lcbw_requests`).
 
 **Does it support international numbers?**
-Yes, the input field automatically handles different country codes and formatting.
+Yes, the input field automatically handles different country codes and formatting using the integrated international telephone input library.
+
+**How do I get a HubSpot API Key?**
+Go to your HubSpot Settings > Integrations > Private Apps. Create a new app, select the "crm.objects.contacts.write" scope, and paste the Access Token into the plugin settings.
 
 ## Changelog
 
-### 1.0.0
-*   Initial release.
-*   Added floating button and modal form.
-*   Added admin management and CSV export.
-*   Integrated international phone input.
-*   Added customization options for colors, text, and positioning.
+### 1.0.3
+*   **Improvement**: Enhanced documentation and external services disclosure.
+*   **Fix**: Minor code improvements and optimizations.
+
+### 1.0.2
+*   **New**: Added Slack and Email notification support.
+*   **Improvement**: Added status badges (New, Contacted, Closed) to the admin requests list.
+*   **Improvement**: Enhanced admin interface with better UX.
+
+### 1.0.1
+*   **New**: HubSpot Integration! You can now sync requests directly to HubSpot CRM.
+*   **New**: Added "Margin X" and "Margin Y" settings for precise positioning of the floating button.
+*   **Fix**: Minor styling adjustments and code refactoring.

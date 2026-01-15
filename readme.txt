@@ -53,17 +53,32 @@ Go to your HubSpot Settings > Integrations > Private Apps. Create a new app, sel
 
 == External services ==
 
-This plugin may connect to external services depending on your configuration:
+This plugin may connect to external third-party services depending on your configuration. Below is a comprehensive list of all external services this plugin uses, what data is transmitted, and under which conditions:
 
-= HubSpot CRM =
-When HubSpot integration is enabled, this plugin sends contact form data (name, phone, email, message) to HubSpot's CRM API to create or update contacts.
-Data is sent only when a user submits the callback form and HubSpot integration is configured.
-Service provided by HubSpot: https://legal.hubspot.com/terms-of-service | https://legal.hubspot.com/privacy-policy
+= HubSpot CRM Integration =
+**What the service is**: HubSpot is a customer relationship management (CRM) platform used for managing contacts and leads.
+**What it's used for**: When enabled, this plugin automatically creates or updates contact records in your HubSpot CRM whenever a visitor submits a callback request.
+**What data is sent**: Full name, phone number, job title/position, company name, and lifecycle stage (automatically set to "lead").
+**When data is sent**: Data is transmitted only when: (1) a visitor successfully submits a callback request form, (2) HubSpot integration is enabled in plugin settings, and (3) a valid HubSpot API key is configured.
+**Service Provider**: HubSpot, Inc.
+**Terms of Service**: https://legal.hubspot.com/terms-of-service
+**Privacy Policy**: https://legal.hubspot.com/privacy-policy
 
-= Slack Notifications =
-When Slack integration is enabled, this plugin sends form submission notifications to your configured Slack webhook URL.
-Data includes form submission details (name, phone, email, message) and is sent only when a user submits the callback form.
-Service provided by Slack: https://slack.com/terms-of-service | https://slack.com/privacy-policy
+= Slack Integration =
+**What the service is**: Slack is a business communication platform that supports webhook notifications.
+**What it's used for**: When enabled, this plugin sends instant notifications to a specified Slack channel whenever a new callback request is submitted.
+**What data is sent**: Visitor's full name, phone number, job title/position (if provided), and company name (if provided).
+**When data is sent**: Data is transmitted only when: (1) a visitor successfully submits a callback request form, (2) Slack integration is enabled in plugin settings, and (3) a valid Slack webhook URL is configured.
+**Service Provider**: Slack Technologies, LLC
+**Terms of Service**: https://slack.com/terms-of-service
+**Privacy Policy**: https://slack.com/privacy-policy
+
+= Email Notifications =
+**What the service is**: The plugin uses WordPress's built-in email functionality (wp_mail()) to send email notifications.
+**What it's used for**: Sends email notifications to site administrators when new callback requests are submitted.
+**What data is sent**: Visitor's full name, phone number, job title/position (if provided), and company name (if provided).
+**When data is sent**: Email notifications are sent only when: (1) a visitor successfully submits a callback request form, (2) email notifications are enabled in plugin settings, and (3) a valid notification email address is configured.
+**Important Note**: Email notifications use WordPress's native wp_mail() function and do not directly connect to external services unless your WordPress installation is configured to use external email services.
 
 == Screenshots ==
 
@@ -72,6 +87,10 @@ Service provided by Slack: https://slack.com/terms-of-service | https://slack.co
 3. Requests Dashboard
 
 == Changelog ==
+
+= 1.0.3 =
+*   Improvement: Enhanced documentation and comprehensive external services disclosure.
+*   Fix: Minor code improvements and optimizations.
 
 = 1.0.2 =
 *   New: Added Email Notification support.
