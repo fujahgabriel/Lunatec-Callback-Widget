@@ -61,6 +61,7 @@ This plugin may connect to external third-party services depending on your confi
 **What data is sent**: Full name, phone number, job title/position, company name, and lifecycle stage (automatically set to "lead").
 **When data is sent**: Data is transmitted only when: (1) a visitor successfully submits a callback request form, (2) HubSpot integration is enabled in plugin settings, and (3) a valid HubSpot API key is configured.
 **Service Provider**: HubSpot, Inc.
+**API Endpoint/Domain**: https://api.hubapi.com
 **Terms of Service**: https://legal.hubspot.com/terms-of-service
 **Privacy Policy**: https://legal.hubspot.com/privacy-policy
 
@@ -70,6 +71,7 @@ This plugin may connect to external third-party services depending on your confi
 **What data is sent**: Visitor's full name, phone number, job title/position (if provided), and company name (if provided).
 **When data is sent**: Data is transmitted only when: (1) a visitor successfully submits a callback request form, (2) Slack integration is enabled in plugin settings, and (3) a valid Slack webhook URL is configured.
 **Service Provider**: Slack Technologies, LLC
+**Webhook Endpoint/Domain**: https://hooks.slack.com (or the Slack-provided webhook URL you configure)
 **Terms of Service**: https://slack.com/terms-of-service
 **Privacy Policy**: https://slack.com/privacy-policy
 
