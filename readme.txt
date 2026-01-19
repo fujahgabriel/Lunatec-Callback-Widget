@@ -37,8 +37,8 @@ The plugin is designed to be lightweight, easy to configure, and developer-frien
 
 1.  Upload the `lunatec-callback-widget` folder to the `/wp-content/plugins/` directory.
 2.  Activate the plugin through the 'Plugins' menu in WordPress.
-3.  Go to **Simple Call Me Back > Settings** to configure the button appearance and form options.
-4.  Go to **Simple Call Me Back > Requests** to view submissions.
+3.  Go to **Lunatec Callback Widget > Settings** to configure the button appearance and form options.
+4.  Go to **Lunatec Callback Widget > Requests** to view submissions.
 
 == Frequently Asked Questions ==
 

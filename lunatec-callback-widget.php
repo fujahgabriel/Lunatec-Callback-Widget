@@ -1,16 +1,18 @@
 <?php
 /**
  * Plugin Name: Lunatec Callback Widget
+ * Plugin URI:  https://github.com/fujahgabriel/lunatec-callback-widget
  * Description: A plugin to allow visitors to request a callback via a modal form.
  * Version: 1.0.3
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Fujah Gabriel
+ * Author URI:  https://fujahgabriel.xyz
  * License: GPL2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: lunatec-callback-widget
  * Domain Path: /languages
- * github: https://github.com/fujahgabriel/lunatec-callback-widget
+ * GitHub: https://github.com/fujahgabriel/lunatec-callback-widget
  */
 
 if (!defined('ABSPATH')) {
@@ -767,7 +769,7 @@ class LCBW_CallbackWidget {
                     </tr>
 
                     <tr valign="top">
-                        <th scope="row"></th>Modal Size</th>
+                        <th scope="row">Modal Size</th>
                         <td>
                             <select name="lcbw_modal_size">
                                 <option value="small" <?php selected(get_option('lcbw_modal_size', 'medium'), 'small'); ?>>Small</option>
