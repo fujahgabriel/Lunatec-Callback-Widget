@@ -1,16 +1,18 @@
 <?php
 /**
  * Plugin Name: Lunatec Callback Widget
+ * Plugin URI:  https://github.com/fujahgabriel/lunatec-callback-widget
  * Description: A plugin to allow visitors to request a callback via a modal form.
  * Version: 1.0.3
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Fujah Gabriel
+ * Author URI:  https://fujahgabriel.xyz
  * License: GPL2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: lunatec-callback-widget
  * Domain Path: /languages
- * github: https://github.com/fujahgabriel/lunatec-callback-widget
+ * GitHub: https://github.com/fujahgabriel/lunatec-callback-widget
  */
 
 if (!defined('ABSPATH')) {
@@ -32,6 +34,7 @@ class LCBW_CallbackWidget {
         register_activation_hook(__FILE__, array($this, 'activate'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'register_settings'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_footer', array($this, 'render_frontend'));
         
@@ -179,15 +182,15 @@ class LCBW_CallbackWidget {
                 break;
         }
 
-        $custom_css = sprintf("
+        $custom_css = "
             .lcbw-floating-btn {
-                background-color: %s;
-                color: %s;
-                %s
+                background-color: " . esc_attr($bg_color) . ";
+                color: " . esc_attr($text_color) . ";
+                " . esc_attr($pos_css) . "
             }
             .lcbw-submit-btn {
-                background-color: %s;
-                color: %s;
+                background-color: " . esc_attr($submit_bg_color) . ";
+                color: " . esc_attr($submit_text_color) . ";
             }
             .lcbw-details { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
             .lcbw-summary { cursor: pointer; font-size: 0.9em; color: #555; margin-bottom: 5px; font-weight: 500; list-style: none; display: flex; align-items: center; justify-content: space-between; }
@@ -204,18 +207,12 @@ class LCBW_CallbackWidget {
             /* Mobile positioning */
             @media (max-width: 480px) {
                 .lcbw-floating-btn {
-                    %s
+                    " . esc_attr($mobile_pos_css) . "
                     padding: 12px 20px;
                     font-size: 14px;
                 }
             }
-        ", 
-        esc_attr($bg_color), 
-        esc_attr($text_color), 
-        esc_attr($pos_css), 
-        esc_attr($submit_bg_color), 
-        esc_attr($submit_text_color), 
-        esc_attr($mobile_pos_css));
+        ";
         wp_add_inline_style('lcbw-style', $custom_css);
 
         wp_enqueue_script('lcbw-intl-tel-input', plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/intlTelInput.min.js', array(), '17.0.8', true);
@@ -226,6 +223,30 @@ class LCBW_CallbackWidget {
             'nonce' => wp_create_nonce('lcbw_submit_request_nonce'),
             'utils_url' => plugin_dir_url(__FILE__) . 'assets/vendor/intl-tel-input/js/utils.js'
         ));
+    }
+
+    /**
+     * Enqueue Admin Styles
+     */
+    public function enqueue_admin_assets($hook) {
+        $allowed_hooks = array(
+            'toplevel_page_lcbw-callback-widget',
+            'lcbw-callback-widget_page_lcbw-callback-widget-settings'
+        );
+
+        if (!in_array($hook, $allowed_hooks, true)) {
+            return;
+        }
+
+        wp_register_style('lcbw-admin', false, array(), self::VERSION);
+        wp_enqueue_style('lcbw-admin');
+
+        $badge_css = '.lcbw-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; }'
+            . '.lcbw-status-new { background-color: #2271b1; }'
+            . '.lcbw-status-contacted { background-color: #dba617; }'
+            . '.lcbw-status-closed { background-color: #787c82; }';
+
+        wp_add_inline_style('lcbw-admin', $badge_css);
     }
 
     /**
@@ -536,14 +557,6 @@ class LCBW_CallbackWidget {
     private function render_list_page() {
         global $wpdb;
 
-        // Custom CSS for Status Badges
-        echo '<style>
-            .lcbw-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #fff; text-transform: uppercase; }
-            .lcbw-status-new { background-color: #2271b1; }
-            .lcbw-status-contacted { background-color: #dba617; }
-            .lcbw-status-closed { background-color: #787c82; }
-        </style>';
-
         // Handle pagination
         $per_page = 20;
         $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
@@ -756,7 +769,7 @@ class LCBW_CallbackWidget {
                     </tr>
 
                     <tr valign="top">
-                        <th scope="row"></th>Modal Size</th>
+                        <th scope="row">Modal Size</th>
                         <td>
                             <select name="lcbw_modal_size">
                                 <option value="small" <?php selected(get_option('lcbw_modal_size', 'medium'), 'small'); ?>>Small</option>
